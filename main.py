@@ -44,7 +44,13 @@ async def check_internet(host: str, port: int, timeout: int, save_real_time: boo
         connected = is_internet_working()
         now = int(time.time())
         if save_real_time:
-            internet += (now, connected)
+            internet += [(now, connected)]
+            longest, start_time, avg_dur, nb_disc, avg_disc_hour = get_disconnection_stats(internet)
+            print("")
+            print(f"longest disconnection: {longest/60} at time {start_time}")
+            print(f"average disconnection duration: {avg_dur}")
+            print(f"total number of disconnection: {nb_disc}")
+            print(f"average number of disconnection per hour: {avg_disc_hour}")
 
         if saving_file_path:
             internet_file.write(f"{now},{connected}\n")
@@ -106,17 +112,17 @@ def get_next_disconnected_period(internet_connection_history: List[Tuple[int, bo
     """
     start = -1
     end = -1
-    for i, (_, state) in enumerate(internet_connection_history[start_index:]):
+    for i, (_, state)  in enumerate(internet_connection_history[start_index:]):
         if not state:
             start = start_index + i
-            end = start
+            end = start + 1
             while end < len(internet_connection_history) and not internet_connection_history[end][1]:
                 end += 1
             break
     return start, end
 
 
-def get_disconnection_stats(internet_connexion_history: List[Tuple[int, bool]]) -> Tuple[int, int, float, int, float]:
+def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]]) -> Tuple[int, int, float, int, float]:
     """
     Iterates over a history of connection/disconnection and returns basic statistics about the disconnections
 
@@ -132,26 +138,32 @@ def get_disconnection_stats(internet_connexion_history: List[Tuple[int, bool]]) 
     nb_disconnection: int = 0
     average_disconnection_per_hour: float = 0
 
-    start, end = get_next_disconnected_period(internet_connexion_history, 0)
+    start, end = get_next_disconnected_period(internet_connection_history, 0)
     while start != -1:
         nb_disconnection += 1
-
-        duration = internet_connexion_history[end][0] - internet_connexion_history[start][0]
+        
+        if end < len(internet_connection_history):
+            duration = internet_connection_history[end][0] - internet_connection_history[start][0]
+        else:
+            duration = internet_connection_history[end-1][0] - internet_connection_history[start][0] 
+            #TODO: this is wrong but ok for now
         average_time += duration
         if duration > longest_time:
             longest_time = duration
-            start_time_longest_disconnection = internet_connexion_history[start][0]
+            start_time_longest_disconnection = internet_connection_history[start][0]
 
-        start, end = get_next_disconnected_period(internet_connexion_history, 0)
+        start, end = get_next_disconnected_period(internet_connection_history, end)
 
     # now we can finish to calculate the average disconnection time by dividing it by the number of disconnections
-    average_time /= nb_disconnection
+    if nb_disconnection > 0:
+        average_time /= nb_disconnection
 
     # we calculate the average number of disconnection per hour ( nb of disconnections / nb of hours)
-    total_history_duration: float = internet_connexion_history[-1][0] - internet_connexion_history[0][0]
+    total_history_duration: float = internet_connection_history[-1][0] - internet_connection_history[0][0]
     # we transform the total duration from seconds to hours
     total_history_duration /= 3600
-    average_disconnection_per_hour = nb_disconnection / total_history_duration
+    if total_history_duration > 0:
+        average_disconnection_per_hour = nb_disconnection / total_history_duration
 
     return longest_time, start_time_longest_disconnection, average_time, nb_disconnection, average_disconnection_per_hour
 
@@ -159,11 +171,11 @@ def get_disconnection_stats(internet_connexion_history: List[Tuple[int, bool]]) 
 async def main(args: argparse.Namespace):
     loop = asyncio.get_event_loop()
     if args.internet:
-        loop.create_task(check_internet(args.host, args.port, args.timeout, args.irt, args.di, args.fi))
+        loop.create_task(check_internet(args.host, args.port, args.timeout, args.internet_real_time, args.delay_internet, args.file_internet))
     if args.bandwidth:
         loop.create_task(check_bandwidth_usage())
     while True:
-        await asyncio.sleep(args.main_loop_sleep_rate)
+        await asyncio.sleep(args.main_loop_rate)
 
 
 if __name__ == "__main__":
@@ -176,7 +188,7 @@ if __name__ == "__main__":
     # parameters for internet checking
     parser.add_argument("-i", "--internet", action="store_true", help="Use it to monitor if this computer has access"
                                                                       "to internet or not.")
-    parser.add_argument("-h", "--host", default="8.8.8.8", help="The host to connect to when checking the internet "
+    parser.add_argument("--host", default="8.8.8.8", help="The host to connect to when checking the internet "
                                                                 "connection")
     parser.add_argument("-p", "--port", default=53, help="The port of the host to connect to when checking the internet"
                                                          " connection")
