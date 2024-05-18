@@ -3,9 +3,9 @@ from datetime import datetime
 import curses
 from typing import Optional
 
-from HowsTheNetwork.bandwidth_statistics import BandwidthStatistics
-from HowsTheNetwork.client import Client
-from HowsTheNetwork.connection_statistics import ConnectionStatistics
+from bandwidth_statistics import BandwidthStatistics
+from client import Client
+from connection_statistics import ConnectionStatistics
 
 
 class ConsoleClient(Client):

@@ -1,3 +1,4 @@
+from console_client import ConsoleClient
 from utils import *
 
 if __name__ == "__main__":

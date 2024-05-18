@@ -13,10 +13,9 @@ from datetime import datetime
 
 
 # global variables for real time display
-from HowsTheNetwork.bandwidth_statistics import BandwidthStatistics
-from HowsTheNetwork.client import Client
-from HowsTheNetwork.connection_statistics import ConnectionStatistics
-from HowsTheNetwork.console_client import ConsoleClient
+from bandwidth_statistics import BandwidthStatistics
+from client import Client
+from connection_statistics import ConnectionStatistics
 
 internet: List[Tuple[int, bool]] = []
 bandwidth: List[Tuple[int, float]] = []
