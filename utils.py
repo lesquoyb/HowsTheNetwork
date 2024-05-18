@@ -1,8 +1,6 @@
 import asyncio
 import socket
 import time
-from asyncio import AbstractEventLoop
-from statistics import mean
 from typing import List, Tuple
 
 import psutil
@@ -206,10 +204,10 @@ def main_loop(client: Client, args: argparse.Namespace):
         the arguments passed to the program
     """
     loop = asyncio.get_event_loop()
-    if args.internet:
+    if args.internet_real_time or args.file_internet:
         loop.create_task(check_internet_loop(client, args.host, args.port, args.timeout, args.internet_real_time,
                                              args.delay_internet, args.file_internet, args.datetime))
-    if args.bandwidth:
+    if args.bandwidth_real_time or args.file_bandwidth:
         loop.create_task(check_bandwidth_usage(client, args.delay_bandwidth, args.bandwidth_real_time,
                                                args.file_bandwidth, args.datetime))
     loop.run_forever()
@@ -224,8 +222,6 @@ def init_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     # parameters for internet checking
-    parser.add_argument("-i", "--internet", action="store_true", help="Use it to monitor if this computer has access"
-                                                                      "to internet or not.")
     parser.add_argument("--host", default="8.8.8.8", help="The host to connect to when checking the internet "
                                                           "connection.")
     parser.add_argument("-p", "--port", default=53, type=float,
@@ -243,9 +239,6 @@ def init_arguments() -> argparse.Namespace:
                                                                                  "connection data into a file")
 
     # Parameters for bandwidth checks
-    parser.add_argument("-b", "--bandwidth", action="store_true", help="Use this to monitor actual bandwidth usage of "
-                                                                       "this computer. Beware, this is just the real "
-                                                                       "bandwidth use, not the bandwidth 'potential'")
     parser.add_argument("-db", "--delay-bandwidth", default=30, type=float,
                         help="The preferred time in between two checks of the real bandwidth consumption. This time "
                              "won't necessarily be met, it depends on your computer load level")
