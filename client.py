@@ -1,3 +1,4 @@
+from HowsTheNetwork.bandwidth_statistics import BandwidthStatistics
 from HowsTheNetwork.connection_statistics import ConnectionStatistics
 
 
@@ -5,4 +6,7 @@ from HowsTheNetwork.connection_statistics import ConnectionStatistics
 class Client:
 
     def update_internet_statistics(self, stats: ConnectionStatistics):
+        pass
+
+    def update_bandwidth_statistics(self, stats: BandwidthStatistics):
         pass

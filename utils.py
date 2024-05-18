@@ -2,6 +2,7 @@ import asyncio
 import socket
 import time
 from asyncio import AbstractEventLoop
+from statistics import mean
 from typing import List, Tuple
 
 import psutil
@@ -14,6 +15,7 @@ from datetime import datetime
 
 
 # global variables for real time display
+from HowsTheNetwork.bandwidth_statistics import BandwidthStatistics
 from HowsTheNetwork.client import Client
 from HowsTheNetwork.connection_statistics import ConnectionStatistics
 from HowsTheNetwork.console_client import ConsoleClient
@@ -39,6 +41,82 @@ def is_internet_working(host: str = "8.8.8.8", port: int = 53, timeout: int = 3)
         return False
 
 
+def get_next_disconnected_period(internet_connection_history: List[Tuple[int, bool]], start_index: int) \
+        -> Tuple[int, int]:
+    """
+    Starts reading the connection history at the given index and returns a pair of indices representing the
+    start and end of the next disconnection period.
+    In case no disconnection was found, the function returns (-1,-1)
+
+    :param internet_connection_history: the connection history, each pair represents a timestamp and a boolean
+        representing the state of the connection (True = connected, False = disconnected). The list must be ordered.
+    :param start_index: The index at which the search for the next disconnection period must start
+    :return: a tuple where the first element is the index of the start of the next disconnection period in the history
+        and the second element of the tuple is the index of the end of the next disconnection period in the history.
+        In case no disconnection was found, the function returns (-1,-1)
+    """
+    start = -1
+    end = -1
+    for i, (_, state) in enumerate(internet_connection_history[start_index:]):
+        if not state:
+            start = start_index + i
+            end = start + 1
+            while end < len(internet_connection_history) and not internet_connection_history[end][1]:
+                end += 1
+            break
+    return start, end
+
+
+def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]],
+                            expected_duration_between_checks: int) -> Tuple[int, int, float, int, float]:
+    """
+    Iterates over a history of connection/disconnection and returns basic statistics about the disconnections
+
+    :param internet_connection_history: ordered list of pairs, the first item is a timestamp in second, the second a
+        boolean that is True when the connection is established and False when disconnected
+    :param expected_duration_between_checks: the time expected between two checks, used to estimate the end of
+        a disconnection period in some cases
+    :return: A tuple composed in that order of: the duration in seconds of the longest disconnection, the starting time
+        in seconds of that disconnection, the average disconnection duration, the total number of disconnection, and the
+        average number of disconnection per hour
+    """
+    longest_time: int = 0
+    start_time_longest_disconnection: int = 0
+    average_time: float = 0
+    nb_disconnection: int = 0
+    average_disconnection_per_hour: float = 0
+
+    start, end = get_next_disconnected_period(internet_connection_history, 0)
+    while start != -1:
+        nb_disconnection += 1
+
+        if end < len(internet_connection_history):
+            duration = internet_connection_history[end][0] - internet_connection_history[start][0]
+        else:
+            # TODO: it can lead to wrong values, but it should stay a reasonable mistake in most cases
+            duration = internet_connection_history[end - 1][0] - internet_connection_history[start][
+                0] + expected_duration_between_checks
+        average_time += duration
+        if duration > longest_time:
+            longest_time = duration
+            start_time_longest_disconnection = internet_connection_history[start][0]
+
+        start, end = get_next_disconnected_period(internet_connection_history, end)
+
+    # now we can finish to calculate the average disconnection time by dividing it by the number of disconnections
+    if nb_disconnection > 0:
+        average_time /= nb_disconnection
+
+    # we calculate the average number of disconnection per hour ( nb of disconnections / nb of hours)
+    total_history_duration: float = internet_connection_history[-1][0] - internet_connection_history[0][0]
+    # we transform the total duration from seconds to hours
+    total_history_duration /= 3600
+    if total_history_duration > 0:
+        average_disconnection_per_hour = nb_disconnection / total_history_duration
+
+    return longest_time, start_time_longest_disconnection, average_time, nb_disconnection, average_disconnection_per_hour
+
+
 async def check_internet_loop(client: Client, host: str, port: int, timeout: int, save_real_time: bool,
                               internet_check_delay: int = 10, saving_file_path: str = None,
                               saving_as_datetime: bool = False):
@@ -61,7 +139,7 @@ async def check_internet_loop(client: Client, host: str, port: int, timeout: int
         await asyncio.sleep(internet_check_delay)
 
 
-def convert_to_kbit(value: int) -> float:
+def bytes_to_kbits(value: int) -> float:
     """
     Converts a number of bytes into its value in Kbit
 
@@ -71,7 +149,20 @@ def convert_to_kbit(value: int) -> float:
     return value / 1024. / 1024. * 8
 
 
-async def check_bandwidth_usage(bandwidth_refresh_rate: int = 30, save_real_time: bool = True,
+def get_bandwidth_stats(bandwidth_history: List[Tuple[int, int]],
+                        expected_duration_between_checks: int) -> BandwidthStatistics:
+    # bandwidth always has a size of 2 or more so no index checking necessary
+    first = bandwidth_history[0]
+    last = bandwidth_history[-1]
+    total = bytes_to_kbits(last[1])
+    current_use = last[1] - bandwidth_history[-2][1]
+    current_speed = current_use / (last[0] - bandwidth_history[-2][0])
+    avg = total / (last[0] - first[0])
+    duration = bandwidth_history[-1][0] - bandwidth_history[0][0]
+    return BandwidthStatistics(current_use, current_speed, avg, duration, total)
+
+
+async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int = 30, save_real_time: bool = True,
                                 saving_bandwidth_file: str = "bandwidth.csv", saving_as_datetime: bool = True):
     global bandwidth
     old_value = 0
@@ -83,15 +174,19 @@ async def check_bandwidth_usage(bandwidth_refresh_rate: int = 30, save_real_time
     while True:
 
         new_value = psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv
-        new_time = time.time()
+        new_time = int(time.time())
+        if save_real_time:
+            bandwidth += [(new_time, new_value)]
+
         if old_value:
             use_per_second = (new_value - old_value) / (new_time - old_time)
             if saving_bandwidth_file:
                 bandwidth_file.write(f"{datetime.fromtimestamp(new_time) if saving_as_datetime else new_time},"
-                                     f"{round(convert_to_kbit(use_per_second))}\n")
+                                     f"{round(bytes_to_kbits(use_per_second))}\n")
                 bandwidth_file.flush()
             if save_real_time:
-                bandwidth += (new_time, new_value)
+                stats = get_bandwidth_stats(bandwidth, bandwidth_refresh_rate)
+                client.update_bandwidth_statistics(stats)
 
         old_value = new_value
         old_time = new_time
@@ -99,87 +194,24 @@ async def check_bandwidth_usage(bandwidth_refresh_rate: int = 30, save_real_time
         await asyncio.sleep(bandwidth_refresh_rate)
 
 
-def get_next_disconnected_period(internet_connection_history: List[Tuple[int, bool]], start_index: int) \
-        -> Tuple[int, int]:
-    """
-    Starts reading the connection history at the given index and returns a pair of indices representing the
-    start and end of the next disconnection period.
-    In case no disconnection was found, the function returns (-1,-1)
-
-    :param internet_connection_history: the connection history, each pair represents a timestamp and a boolean
-        representing the state of the connection (True = connected, False = disconnected). The list must be ordered.
-    :param start_index: The index at which the search for the next disconnection period must start
-    :return: a tuple where the first element is the index of the start of the next disconnection period in the history
-        and the second element of the tuple is the index of the end of the next disconnection period in the history.
-        In case no disconnection was found, the function returns (-1,-1)
-    """
-    start = -1
-    end = -1
-    for i, (_, state)  in enumerate(internet_connection_history[start_index:]):
-        if not state:
-            start = start_index + i
-            end = start + 1
-            while end < len(internet_connection_history) and not internet_connection_history[end][1]:
-                end += 1
-            break
-    return start, end
-
-
-def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]], expected_duration_between_checks: int) -> Tuple[int, int, float, int, float]:
-    """
-    Iterates over a history of connection/disconnection and returns basic statistics about the disconnections
-
-    :param internet_connection_history: ordered list of pairs, the first item is a timestamp in second, the second a
-        boolean that is True when the connection is established and False when disconnected
-    :param expected_duration_between_checks: the time expected between two checks, used to estimate the end of
-        a disconnection period in some cases
-    :return: A tuple composed in that order of: the duration in seconds of the longest disconnection, the starting time
-        in seconds of that disconnection, the average disconnection duration, the total number of disconnection, and the
-        average number of disconnection per hour
-    """
-    longest_time: int = 0
-    start_time_longest_disconnection: int = 0
-    average_time: float = 0
-    nb_disconnection: int = 0
-    average_disconnection_per_hour: float = 0
-
-    start, end = get_next_disconnected_period(internet_connection_history, 0)
-    while start != -1:
-        nb_disconnection += 1
-        
-        if end < len(internet_connection_history):
-            duration = internet_connection_history[end][0] - internet_connection_history[start][0]
-        else:
-            # TODO: it can lead to wrong values, but it should stay a reasonable mistake in most cases
-            duration = internet_connection_history[end-1][0] - internet_connection_history[start][0] + expected_duration_between_checks
-        average_time += duration
-        if duration > longest_time:
-            longest_time = duration
-            start_time_longest_disconnection = internet_connection_history[start][0]
-
-        start, end = get_next_disconnected_period(internet_connection_history, end)
-
-    # now we can finish to calculate the average disconnection time by dividing it by the number of disconnections
-    if nb_disconnection > 0:
-        average_time /= nb_disconnection
-
-    # we calculate the average number of disconnection per hour ( nb of disconnections / nb of hours)
-    total_history_duration: float = internet_connection_history[-1][0] - internet_connection_history[0][0]
-    # we transform the total duration from seconds to hours
-    total_history_duration /= 3600
-    if total_history_duration > 0:
-        average_disconnection_per_hour = nb_disconnection / total_history_duration
-
-    return longest_time, start_time_longest_disconnection, average_time, nb_disconnection, average_disconnection_per_hour
-
 
 def main_loop(client: Client, args: argparse.Namespace):
+    """
+    Uses the command parameters passed to the function to initialise the two main loops: checking for
+    connection and checking bandwidth usage. Once everything is initialised this loop will run forever.
+
+    :param client:
+        the object that will be responsible for showing to the user the current state of the network
+    :param args:
+        the arguments passed to the program
+    """
     loop = asyncio.get_event_loop()
     if args.internet:
         loop.create_task(check_internet_loop(client, args.host, args.port, args.timeout, args.internet_real_time,
                                              args.delay_internet, args.file_internet, args.datetime))
     if args.bandwidth:
-        loop.create_task(check_bandwidth_usage())
+        loop.create_task(check_bandwidth_usage(client, args.delay_bandwidth, args.bandwidth_real_time,
+                                               args.file_bandwidth, args.datetime))
     loop.run_forever()
 
 
@@ -190,22 +222,19 @@ def init_arguments() -> argparse.Namespace:
     :return: the arguments in the form of an argparse Namespace
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--bandwidth", action="store_true", help="Use this to monitor actual bandwidth usage of "
-                                                                       "this computer. Beware, this is just the real "
-                                                                       "bandwidth use, not the bandwidth 'potential'")
+
     # parameters for internet checking
     parser.add_argument("-i", "--internet", action="store_true", help="Use it to monitor if this computer has access"
                                                                       "to internet or not.")
     parser.add_argument("--host", default="8.8.8.8", help="The host to connect to when checking the internet "
                                                           "connection.")
-    parser.add_argument("-p", "--port", default=53, help="The port of the host to connect to when checking the internet"
-                                                         " connection")
-    parser.add_argument("-t", "--timeout", default=3, help="The time in seconds to timeout when checking the internet "
-                                                           "connection")
-    parser.add_argument("-di", "--delay-internet", default=10, help="The preferred time in between two checks of "
-                                                                    "the internet connection. This time won't "
-                                                                    "necessarily be met, it depends on your computer "
-                                                                    "load level")
+    parser.add_argument("-p", "--port", default=53, type=float,
+                        help="The port of the host to connect to when checking the internet connection")
+    parser.add_argument("-t", "--timeout", default=3, type=float, help="The time in seconds to timeout when checking "
+                                                                       "the internet connection")
+    parser.add_argument("-di", "--delay-internet", default=10, type=float,
+                        help="The preferred time in between two checks of the internet connection. This time won't "
+                             "necessarily be met, it depends on your computer load level")
     parser.add_argument("-irt", "--internet-real-time", action="store_true", help="Use this option to get real time "
                                                                                   "overview of your network "
                                                                                   "connections and disconnections "
@@ -213,13 +242,20 @@ def init_arguments() -> argparse.Namespace:
     parser.add_argument("-fi", "--file-internet", type=str, required=False, help="Use this option to save the internet "
                                                                                  "connection data into a file")
 
-    # bandwidth
-    # TODO
-    # bandwidth_refresh_rate: int = 30, save_real_time: bool = True,
-    # save_in_file: bool = True, saving_bandwidth_file: str = "bandwidth.csv"
+    # Parameters for bandwidth checks
+    parser.add_argument("-b", "--bandwidth", action="store_true", help="Use this to monitor actual bandwidth usage of "
+                                                                       "this computer. Beware, this is just the real "
+                                                                       "bandwidth use, not the bandwidth 'potential'")
+    parser.add_argument("-db", "--delay-bandwidth", default=30, type=float,
+                        help="The preferred time in between two checks of the real bandwidth consumption. This time "
+                             "won't necessarily be met, it depends on your computer load level")
+    parser.add_argument("-brt", "--bandwidth-real-time", action="store_true", help="Use this option to get real time "
+                                                                                   "overview of your network bandwidth "
+                                                                                   "usage.")
+    parser.add_argument("-fb", "--file-bandwidth", type=str, required=False, help="Use this option to save the "
+                                                                                  "bandwidth use data into a file.")
 
-    # general option
-
+    # general options
     parser.add_argument("--datetime", action="store_true", help="Use to save the time in files in the format "
                                                                 "of a datetime instead of the default timestamp.")
 
