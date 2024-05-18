@@ -149,13 +149,13 @@ def bytes_to_kbits(value: int) -> float:
     return value / 1024. / 1024. * 8
 
 
-def get_bandwidth_stats(bandwidth_history: List[Tuple[int, int]],
+def get_bandwidth_stats(bandwidth_history: List[Tuple[int, float]],
                         expected_duration_between_checks: int) -> BandwidthStatistics:
     # bandwidth always has a size of 2 or more so no index checking necessary
     first = bandwidth_history[0]
     last = bandwidth_history[-1]
     total = bytes_to_kbits(last[1])
-    current_use = last[1] - bandwidth_history[-2][1]
+    current_use = bytes_to_kbits(last[1] - bandwidth_history[-2][1])
     current_speed = current_use / (last[0] - bandwidth_history[-2][0])
     avg = total / (last[0] - first[0])
     duration = bandwidth_history[-1][0] - bandwidth_history[0][0]
