@@ -1,11 +1,11 @@
 import asyncio
 import socket
 import time
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import psutil
 import argparse
-import sched
+from datetime import datetime
 
 # my network is so bad that I have to take some of my time to write software to demonstrate it to my internet provider
 # based on: https://stackoverflow.com/questions/3764291/how-can-i-see-if-theres-an-available-and-active-network-connection-in-python
@@ -45,15 +45,16 @@ async def check_internet(host: str, port: int, timeout: int, save_real_time: boo
         now = int(time.time())
         if save_real_time:
             internet += [(now, connected)]
-            longest, start_time, avg_dur, nb_disc, avg_disc_hour = get_disconnection_stats(internet)
+            longest, start_time, avg_dur, nb_disc, avg_disc_hour = get_disconnection_stats(internet, internet_check_delay)
             print("")
-            print(f"longest disconnection: {longest/60} at time {start_time}")
-            print(f"average disconnection duration: {avg_dur}")
+            print(f"current state: {'connected' if connected else 'not connected'}")
+            print(f"longest disconnection: {longest//60}m{longest % 60:.0f}s at time {datetime.fromtimestamp(start_time) if start_time > 0 else 0}")
+            print(f"average disconnection duration: {avg_dur:.0f}s")
             print(f"total number of disconnection: {nb_disc}")
-            print(f"average number of disconnection per hour: {avg_disc_hour}")
+            print(f"average number of disconnection per hour: {avg_disc_hour:.2f}")
 
         if saving_file_path:
-            internet_file.write(f"{now},{connected}\n")
+            internet_file.write(f"{datetime.fromtimestamp(now) if args.datetime else now},{connected}\n")
             internet_file.flush()
 
         await asyncio.sleep(internet_check_delay)
@@ -85,7 +86,8 @@ async def check_bandwidth_usage(bandwidth_refresh_rate: int = 30, save_real_time
         if old_value:
             use_per_second = (new_value - old_value) / (new_time - old_time)
             if save_in_file:
-                bandwidth_file.write(f"{new_time},{round(convert_to_kbit(use_per_second))}\n")
+                bandwidth_file.write(f"{datetime.fromtimestamp(new_time) if args.datetime else new_time},"
+                                     f"{round(convert_to_kbit(use_per_second))}\n")
                 bandwidth_file.flush()
             if save_real_time:
                 bandwidth += (new_time, new_value)
@@ -122,12 +124,14 @@ def get_next_disconnected_period(internet_connection_history: List[Tuple[int, bo
     return start, end
 
 
-def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]]) -> Tuple[int, int, float, int, float]:
+def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]], expected_duration_between_checks: int) -> Tuple[int, int, float, int, float]:
     """
     Iterates over a history of connection/disconnection and returns basic statistics about the disconnections
 
-    :param internet_connexion_history: ordered list of pairs, the first item is a timestamp in second, the second a
+    :param internet_connection_history: ordered list of pairs, the first item is a timestamp in second, the second a
         boolean that is True when the connection is established and False when disconnected
+    :param expected_duration_between_checks: the time expected between two checks, used to estimate the end of
+        a disconnection period in some cases
     :return: A tuple composed in that order of: the duration in seconds of the longest disconnection, the starting time
         in seconds of that disconnection, the average disconnection duration, the total number of disconnection, and the
         average number of disconnection per hour
@@ -145,8 +149,8 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]])
         if end < len(internet_connection_history):
             duration = internet_connection_history[end][0] - internet_connection_history[start][0]
         else:
-            duration = internet_connection_history[end-1][0] - internet_connection_history[start][0] 
-            #TODO: this is wrong but ok for now
+            # TODO: it can lead to wrong values, but it should stay a reasonable mistake in most cases
+            duration = internet_connection_history[end-1][0] - internet_connection_history[start][0] + expected_duration_between_checks
         average_time += duration
         if duration > longest_time:
             longest_time = duration
@@ -189,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--internet", action="store_true", help="Use it to monitor if this computer has access"
                                                                       "to internet or not.")
     parser.add_argument("--host", default="8.8.8.8", help="The host to connect to when checking the internet "
-                                                                "connection")
+                                                          "connection.")
     parser.add_argument("-p", "--port", default=53, help="The port of the host to connect to when checking the internet"
                                                          " connection")
     parser.add_argument("-t", "--timeout", default=3, help="The time in seconds to timeout when checking the internet "
@@ -209,6 +213,11 @@ if __name__ == "__main__":
     # TODO
     # bandwidth_refresh_rate: int = 30, save_real_time: bool = True,
     # save_in_file: bool = True, saving_bandwidth_file: str = "bandwidth.csv"
+
+    # general option
+
+    parser.add_argument("--datetime", action="store_true", help="Use to save the time in files in the format "
+                                                                 "of a datetime instead of the default timestamp.")
 
     args = parser.parse_args()
     if not args.internet and not args.bandwidth:
