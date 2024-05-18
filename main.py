@@ -41,7 +41,7 @@ async def check_internet(host: str, port: int, timeout: int, save_real_time: boo
         internet_file = open(saving_file_path, "w")
 
     while True:
-        connected = is_internet_working()
+        connected = is_internet_working(host, port, timeout)
         now = int(time.time())
         if save_real_time:
             internet += [(now, connected)]
