@@ -21,7 +21,7 @@ pip install windows-curses
 There are currently two main feature to this project:
   - repeatedly check if the computer has access to the internet
   - monitor the real network use
-  - 
+
 And of course the program can execute both at the same time.
 To get more information about the program parameters, check run it with the option `--help`
 
