@@ -56,6 +56,8 @@ Right after running the command you should see the first lines about the connect
 
 The console will refresh itself everytime it has new data, so with the default values it would be every 10 seconds.
 
+To exit press the 'q' key on your keyboard
+
 ## Try it in GUI
 
 The script to run the program in GUI mode is `gui_main.py`. Don't forget to install the `PySide6` dependencies mentionned above!
