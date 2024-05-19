@@ -76,25 +76,8 @@ python3.exe gui_main.py -irt -brt
 ```
 ### Expected output
 
-Right after running the command you should see the first lines about the connectivity in the console, and after 20 seconds you should see something similar to this:
-![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/25b7cc74-b0b6-4449-9dff-de096c102343)
+A new window should open with a chart in the middle and some stats in plain text above and under it.
 
-
-
-## Try it in GUI
-
-The script to run the program in console only is `console_main.py`.
-
-### On MacOs and Linux
-run the command:
-```
-python3 console_main.py -irt -brt
-```
-### On Windows
-run the command:
-```
-python3.exe console_main.py -irt -brt
-```
 
 ## Check internet connection
 
