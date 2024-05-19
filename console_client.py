@@ -52,7 +52,7 @@ class ConsoleClient(Client):
             self.write_line(0, f"Current state: {'connected' if self.current_connection_statistics.currently_connected else 'not connected'} "
                                f"Ping: {self.current_connection_statistics.current_ping}ms")
             self.write_line(1, f"Longest disconnection: {self.current_connection_statistics.longest_duration // 60}m{self.current_connection_statistics.longest_duration % 60:.0f}s "
-                               f"at time {datetime.fromtimestamp(self.current_connection_statistics.start_longest) if self.current_connection_statistics.start_longest > 0 else 0}")
+                               f"starting: {datetime.fromtimestamp(self.current_connection_statistics.start_longest) if self.current_connection_statistics.start_longest > 0 else 0}")
             self.write_line(2, f"Average disconnection duration: {self.current_connection_statistics.average_duration:.0f}s")
             self.write_line(3, f"Total number of disconnection: {self.current_connection_statistics.nb_disconnection}")
             self.write_line(4, f"Average number of disconnection per hour: {self.current_connection_statistics.average_nb_disc_hour:.2f}")
@@ -63,7 +63,7 @@ class ConsoleClient(Client):
         if self.current_bandwidth_statistics:
             self.write_line(self.bandwidth_start_line, f"Real network use since last update: {self.current_bandwidth_statistics.current_network_use:.0f}Kbits")
             self.write_line(self.bandwidth_start_line + 1, f"Real network speed since last update: {self.current_bandwidth_statistics.current_network_speed:.0f}Kbits/second")
-            self.write_line(self.bandwidth_start_line + 2, f"Average network use since the beginning: {self.current_bandwidth_statistics.average_network_use:.0f}Kbits/second")
+            self.write_line(self.bandwidth_start_line + 2, f"Average network use: {self.current_bandwidth_statistics.average_network_use:.0f}Kbits/second")
             self.write_line(self.bandwidth_start_line + 3, f"Total network use: {self.current_bandwidth_statistics.total_use:.0f}Kbits")
             self.write_line(self.bandwidth_start_line + 4, f"Total monitoring duration: {self.current_bandwidth_statistics.total_duration//60}m{self.current_bandwidth_statistics.total_duration % 60}s")
 
