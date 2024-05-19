@@ -107,20 +107,10 @@ class Ui_QtClientWidget(object):
         self.layout_stats.setObjectName(u"layout_stats")
         self.layout_connection_stats = QGridLayout()
         self.layout_connection_stats.setObjectName(u"layout_connection_stats")
-        self.label_8 = QLabel(QtClientWidget)
-        self.label_8.setObjectName(u"label_8")
-
-        self.layout_connection_stats.addWidget(self.label_8, 4, 0, 1, 1)
-
         self.label_14 = QLabel(QtClientWidget)
         self.label_14.setObjectName(u"label_14")
 
         self.layout_connection_stats.addWidget(self.label_14, 3, 0, 1, 1)
-
-        self.label_13 = QLabel(QtClientWidget)
-        self.label_13.setObjectName(u"label_13")
-
-        self.layout_connection_stats.addWidget(self.label_13, 5, 0, 1, 1)
 
         self.label_average_nb_disconnection_hour = QLabel(QtClientWidget)
         self.label_average_nb_disconnection_hour.setObjectName(u"label_average_nb_disconnection_hour")
@@ -160,29 +150,6 @@ class Ui_QtClientWidget(object):
         self.label_11.setObjectName(u"label_11")
 
         self.layout_connection_stats.addWidget(self.label_11, 0, 0, 1, 1)
-
-        self.label_16 = QLabel(QtClientWidget)
-        self.label_16.setObjectName(u"label_16")
-
-        self.layout_connection_stats.addWidget(self.label_16, 6, 0, 1, 1)
-
-        self.label_highest_ping = QLabel(QtClientWidget)
-        self.label_highest_ping.setObjectName(u"label_highest_ping")
-        self.label_highest_ping.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.layout_connection_stats.addWidget(self.label_highest_ping, 5, 1, 1, 1)
-
-        self.label_lowest_ping = QLabel(QtClientWidget)
-        self.label_lowest_ping.setObjectName(u"label_lowest_ping")
-        self.label_lowest_ping.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.layout_connection_stats.addWidget(self.label_lowest_ping, 4, 1, 1, 1)
-
-        self.label_average_ping = QLabel(QtClientWidget)
-        self.label_average_ping.setObjectName(u"label_average_ping")
-        self.label_average_ping.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.layout_connection_stats.addWidget(self.label_average_ping, 6, 1, 1, 1)
 
 
         self.layout_stats.addLayout(self.layout_connection_stats)
@@ -263,6 +230,85 @@ class Ui_QtClientWidget(object):
 
         self.verticalLayout.addLayout(self.layout_stats)
 
+        self.layout_ping = QHBoxLayout()
+        self.layout_ping.setObjectName(u"layout_ping")
+        self.label_8 = QLabel(QtClientWidget)
+        self.label_8.setObjectName(u"label_8")
+        sizePolicy.setHeightForWidth(self.label_8.sizePolicy().hasHeightForWidth())
+        self.label_8.setSizePolicy(sizePolicy)
+
+        self.layout_ping.addWidget(self.label_8)
+
+        self.label_lowest_ping = QLabel(QtClientWidget)
+        self.label_lowest_ping.setObjectName(u"label_lowest_ping")
+        sizePolicy1.setHeightForWidth(self.label_lowest_ping.sizePolicy().hasHeightForWidth())
+        self.label_lowest_ping.setSizePolicy(sizePolicy1)
+        self.label_lowest_ping.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.layout_ping.addWidget(self.label_lowest_ping)
+
+        self.label_18 = QLabel(QtClientWidget)
+        self.label_18.setObjectName(u"label_18")
+        sizePolicy.setHeightForWidth(self.label_18.sizePolicy().hasHeightForWidth())
+        self.label_18.setSizePolicy(sizePolicy)
+
+        self.layout_ping.addWidget(self.label_18)
+
+        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.layout_ping.addItem(self.horizontalSpacer_4)
+
+        self.label_13 = QLabel(QtClientWidget)
+        self.label_13.setObjectName(u"label_13")
+        sizePolicy.setHeightForWidth(self.label_13.sizePolicy().hasHeightForWidth())
+        self.label_13.setSizePolicy(sizePolicy)
+
+        self.layout_ping.addWidget(self.label_13)
+
+        self.label_highest_ping = QLabel(QtClientWidget)
+        self.label_highest_ping.setObjectName(u"label_highest_ping")
+        sizePolicy1.setHeightForWidth(self.label_highest_ping.sizePolicy().hasHeightForWidth())
+        self.label_highest_ping.setSizePolicy(sizePolicy1)
+        self.label_highest_ping.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.layout_ping.addWidget(self.label_highest_ping)
+
+        self.label_20 = QLabel(QtClientWidget)
+        self.label_20.setObjectName(u"label_20")
+        sizePolicy.setHeightForWidth(self.label_20.sizePolicy().hasHeightForWidth())
+        self.label_20.setSizePolicy(sizePolicy)
+
+        self.layout_ping.addWidget(self.label_20)
+
+        self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.layout_ping.addItem(self.horizontalSpacer_5)
+
+        self.label_16 = QLabel(QtClientWidget)
+        self.label_16.setObjectName(u"label_16")
+        sizePolicy.setHeightForWidth(self.label_16.sizePolicy().hasHeightForWidth())
+        self.label_16.setSizePolicy(sizePolicy)
+
+        self.layout_ping.addWidget(self.label_16)
+
+        self.label_average_ping = QLabel(QtClientWidget)
+        self.label_average_ping.setObjectName(u"label_average_ping")
+        sizePolicy1.setHeightForWidth(self.label_average_ping.sizePolicy().hasHeightForWidth())
+        self.label_average_ping.setSizePolicy(sizePolicy1)
+        self.label_average_ping.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.layout_ping.addWidget(self.label_average_ping)
+
+        self.label_21 = QLabel(QtClientWidget)
+        self.label_21.setObjectName(u"label_21")
+        sizePolicy.setHeightForWidth(self.label_21.sizePolicy().hasHeightForWidth())
+        self.label_21.setSizePolicy(sizePolicy)
+
+        self.layout_ping.addWidget(self.label_21)
+
+
+        self.verticalLayout.addLayout(self.layout_ping)
+
 
         self.retranslateUi(QtClientWidget)
 
@@ -279,9 +325,7 @@ class Ui_QtClientWidget(object):
         self.label_start_time.setText(QCoreApplication.translate("QtClientWidget", u"2024-05-19 14:12:00", None))
         self.label_15.setText(QCoreApplication.translate("QtClientWidget", u"-", None))
         self.label_end_time.setText(QCoreApplication.translate("QtClientWidget", u"2024-05-19 14:12:00", None))
-        self.label_8.setText(QCoreApplication.translate("QtClientWidget", u"Lowest ping", None))
         self.label_14.setText(QCoreApplication.translate("QtClientWidget", u"Average number of disconnection per hour", None))
-        self.label_13.setText(QCoreApplication.translate("QtClientWidget", u"Highest ping", None))
         self.label_average_nb_disconnection_hour.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
         self.label_12.setText(QCoreApplication.translate("QtClientWidget", u"Total number of disconnections", None))
         self.label_nb_disconnections.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
@@ -289,11 +333,7 @@ class Ui_QtClientWidget(object):
         self.label_10.setText(QCoreApplication.translate("QtClientWidget", u"Average disconnection duration", None))
         self.label_longest_duration.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
         self.label_11.setText(QCoreApplication.translate("QtClientWidget", u"Longest duration offline", None))
-        self.label_16.setText(QCoreApplication.translate("QtClientWidget", u"Average ping", None))
-        self.label_highest_ping.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
-        self.label_lowest_ping.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
-        self.label_average_ping.setText(QCoreApplication.translate("QtClientWidget", u"..", None))
-        self.label_5.setText(QCoreApplication.translate("QtClientWidget", u"Average network use since the beginning", None))
+        self.label_5.setText(QCoreApplication.translate("QtClientWidget", u"Average network use", None))
         self.label_3.setText(QCoreApplication.translate("QtClientWidget", u"Real network use since last update", None))
         self.label_2.setText(QCoreApplication.translate("QtClientWidget", u"Real network speed since last update", None))
         self.label_6.setText(QCoreApplication.translate("QtClientWidget", u"Total network use", None))
@@ -305,5 +345,14 @@ class Ui_QtClientWidget(object):
         self.label_4.setText(QCoreApplication.translate("QtClientWidget", u"Kbits/s", None))
         self.label_7.setText(QCoreApplication.translate("QtClientWidget", u"Kbits/s", None))
         self.label_total_use_unit.setText(QCoreApplication.translate("QtClientWidget", u"Kbits", None))
+        self.label_8.setText(QCoreApplication.translate("QtClientWidget", u"Lowest ping", None))
+        self.label_lowest_ping.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
+        self.label_18.setText(QCoreApplication.translate("QtClientWidget", u"ms", None))
+        self.label_13.setText(QCoreApplication.translate("QtClientWidget", u"Highest ping", None))
+        self.label_highest_ping.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
+        self.label_20.setText(QCoreApplication.translate("QtClientWidget", u"ms", None))
+        self.label_16.setText(QCoreApplication.translate("QtClientWidget", u"Average ping", None))
+        self.label_average_ping.setText(QCoreApplication.translate("QtClientWidget", u"..", None))
+        self.label_21.setText(QCoreApplication.translate("QtClientWidget", u"ms", None))
     # retranslateUi
 
