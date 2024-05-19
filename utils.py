@@ -1,6 +1,7 @@
 import asyncio
 import socket
 import time
+from asyncio import AbstractEventLoop
 from typing import List, Tuple
 
 import psutil
@@ -212,7 +213,7 @@ async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int = 30
         await asyncio.sleep(bandwidth_refresh_rate)
 
 
-def main_loop(client: Client, args: argparse.Namespace):
+def main_loop(client: Client, args: argparse.Namespace, loop: AbstractEventLoop):
     """
     Uses the command parameters passed to the function to initialise the two main loops: checking for
     connection and checking bandwidth usage. Once everything is initialised this loop will run forever.
@@ -222,7 +223,6 @@ def main_loop(client: Client, args: argparse.Namespace):
     :param args:
         the arguments passed to the program
     """
-    loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     if args.internet_real_time or args.file_internet:
         loop.create_task(check_internet_loop(client, args.host, args.port, args.timeout, args.internet_real_time,

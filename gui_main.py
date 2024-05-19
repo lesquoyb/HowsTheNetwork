@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import threading
+from typing import Optional
 
 from PySide6.QtWidgets import QApplication
 
@@ -14,14 +15,15 @@ if __name__ == "__main__":
     widget = PyQtClient()
 
     args = init_arguments()
-    thread: threading.Thread = None
+    thread: Optional[threading.Thread] = None
+    loop = asyncio.new_event_loop()
     if not args.internet_real_time and not args.file_internet \
             and not args.bandwidth_real_time and not args.file_bandwidth:
         print("You have to pick at least one of those for options: internet_real_time, file_internet, "
               "bandwidth_real_time and file_bandwidth")
         exit(-1)
     else:
-        thread = threading.Thread(target=main_loop, args=(widget, args))
+        thread = threading.Thread(target=main_loop, args=(widget, args, loop))
         thread.start()
 
     widget.show()

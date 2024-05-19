@@ -1,10 +1,11 @@
 import datetime
 import sys
-from typing import Optional
+from typing import Optional, List, Tuple, Dict
 
-from PySide6.QtCharts import QChart, QLineSeries
-from PySide6.QtCore import QDateTime
+from PySide6.QtCharts import QChart, QLineSeries, QDateTimeAxis, QValueAxis
+from PySide6.QtCore import QDateTime, Qt
 
+import utils
 from bandwidth_statistics import BandwidthStatistics
 from client import Client
 
@@ -17,10 +18,8 @@ from PySide6.QtWidgets import QApplication, QWidget
 from connection_statistics import ConnectionStatistics
 from qt_client import Ui_QtClientWidget
 
+
 # This class loads the pyqt_client into a qt window and takes care of filling it with proper data
-from utils import init_arguments, main_loop
-
-
 class PyQtClient(QWidget, Client):
 
     def __init__(self, parent=None):
@@ -30,71 +29,57 @@ class PyQtClient(QWidget, Client):
         self.setWindowTitle("How's the network?")
         self.start_time: Optional[int] = None
         self.end_time: Optional[int] = None
-        self.chart = QChart()
+        self.chart = self.ui.view_data.chart()
+        self.series: Dict[str, QLineSeries] = {}
 
         self.chart.setAnimationOptions(QChart.AnimationOption.AllAnimations)
 
-        #self.add_series("Magnitude (Column 1)", [0, 1])
+        self.axis_x = QDateTimeAxis()
+        self.add_date_axis()
+        self.add_timeseries("Ping")
+        self.add_ping_y_axis()
+        self.add_timeseries("Speed")
+        self.add_speed_y_axis()
+
         # TODO: set an icon or remove the icon from title bar
 
-    def add_series(self, name, columns):
+    def add_ping_y_axis(self):
+        axis_y = QValueAxis()
+        axis_y.setTickCount(10)
+        axis_y.setLabelFormat("%.0f")
+        axis_y.setTitleText("Ping (ms)")
+        axis_y.setMin(0)
+        self.chart.addAxis(axis_y, Qt.AlignmentFlag.AlignLeft)
+        self.series["Ping"].attachAxis(axis_y)
 
-        # Create QLineSeries
+    def add_speed_y_axis(self):
+        axis_y = QValueAxis()
+        axis_y.setTickCount(10)
+        axis_y.setLabelFormat("%.0f")
+        axis_y.setTitleText("Speed (KBits/s)")
+        axis_y.setMin(0)
+        self.chart.addAxis(axis_y, Qt.AlignmentFlag.AlignRight)
+        self.series["Speed"].attachAxis(axis_y)
 
-        self.series = QLineSeries()
-
-        self.series.setName(name)
-
-        # Filling QLineSeries
-        for i in range(self.model.rowCount()):
-
-            # Getting the data
-            t = self.model.index(i, 0).data()
-
-            date_fmt = "yyyy-MM-dd HH:mm:ss.zzz"
-
-            x = QDateTime().fromString(t, date_fmt).toSecsSinceEpoch()
-
-            y = float(self.model.index(i, 1).data())
-
-            if x > 0 and y > 0:
-                self.series.append(x, y)
-
-        self.chart.addSeries(self.series)
-
-        # Setting X-axis
-
-        self.axis_x = QDateTimeAxis()
-
+    def add_date_axis(self):
         self.axis_x.setTickCount(10)
-
-        self.axis_x.setFormat("dd.MM (h:mm)")
-
+        self.axis_x.setFormat("dd.MM (h:mm:ss)")
         self.axis_x.setTitleText("Date")
+        self.chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
 
-        self.chart.addAxis(self.axis_x, Qt.AlignBottom)
+    def add_timeseries(self, name):
 
-        self.series.attachAxis(self.axis_x)
+        series = QLineSeries()
+        series.setName(name)
 
-        # Setting Y-axis
+        self.series[name] = series
+        self.chart.addSeries(series)
 
-        self.axis_y = QValueAxis()
+        series.attachAxis(self.axis_x)
 
-        self.axis_y.setTickCount(10)
+        self.chart.legend().hide()
+        self.chart.setTitle("Connection overview")
 
-        self.axis_y.setLabelFormat("%.2f")
-
-        self.axis_y.setTitleText("Magnitude")
-
-        self.chart.addAxis(self.axis_y, Qt.AlignLeft)
-
-        self.series.attachAxis(self.axis_y)
-
-        # Getting the color from the QChart to use it on the QTableView
-
-        color_name = self.series.pen().color().name()
-
-        self.model.color = f"{color_name}"
 
     def update_time(self, timestamp: int):
         # if the data time is > than the start time or < than the end time, we update them
@@ -115,8 +100,8 @@ class PyQtClient(QWidget, Client):
         else:
             self.ui.label_connection_state.setText("Not connected")
 
-        self.ui.label_longest_duration.setText(f"{stats.longest_duration // 60}m{stats.longest_duration % 60:.0f}")
-        self.ui.label_average_disconnection_time.setText(f"{stats.average_duration // 60}m{stats.average_duration % 60:.0f}")
+        self.ui.label_longest_duration.setText(f"{stats.longest_duration // 60:.0f}m{stats.longest_duration % 60:.0f}s")
+        self.ui.label_average_disconnection_time.setText(f"{stats.average_duration // 60:.0f}m{stats.average_duration % 60:.0f}s")
         self.ui.label_nb_disconnections.setText(str(stats.nb_disconnection))
         self.ui.label_average_nb_disconnection_hour.setText(f"{stats.average_nb_disc_hour:.2f}")
 
@@ -125,6 +110,9 @@ class PyQtClient(QWidget, Client):
         self.ui.label_highest_ping.setText(f"{stats.max_ping}")
         self.ui.label_average_ping.setText(f"{stats.average_ping:.0f}")
 
+        self.series["Ping"].append(stats.current_time, stats.current_ping)
+
+
     def update_bandwidth_statistics(self, stats: BandwidthStatistics):
         self.update_time(stats.current_time)
         self.ui.label_current_use.setText(f"{stats.current_network_use:.2f}")
@@ -132,4 +120,5 @@ class PyQtClient(QWidget, Client):
         self.ui.label_average_use.setText(f"{stats.average_network_use:.2f}")
         self.ui.label_total_use.setText(f"{stats.total_use:.0f}")
 
+        self.series["Speed"].append(stats.current_time, stats.current_network_speed)
 

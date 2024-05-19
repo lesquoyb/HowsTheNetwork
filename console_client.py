@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import AbstractEventLoop
 from datetime import datetime
 import curses
 from typing import Optional
@@ -13,10 +14,11 @@ class ConsoleClient(Client):
     CONNECTION_SCREEN_HEIGHT = 8
     BANDWIDTH_SCREEN_HEIGHT = 5
 
-    def __init__(self, connection, bandwidth):
+    def __init__(self, connection: bool, bandwidth: bool, loop: AbstractEventLoop):
 
         self.current_connection_statistics: Optional[ConnectionStatistics] = None
         self.current_bandwidth_statistics: Optional[BandwidthStatistics] = None
+        self.loop = loop
 
         if connection or bandwidth:
             self.whole_screen = curses.initscr()
@@ -29,8 +31,8 @@ class ConsoleClient(Client):
             self.start_user_input_thread()
 
     def start_user_input_thread(self):
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.user_input_thread())
+
+        self.loop.create_task(self.user_input_thread())
 
     async def user_input_thread(self):
         # sets negative timeout so getch becomes blocking
@@ -40,7 +42,7 @@ class ConsoleClient(Client):
             h = self.whole_screen.getch()
             if h == ord('q'):
                 self.closing()
-            await asyncio.sleep(2)
+            await asyncio.sleep(0.5)
 
     def write_line(self, line: int, string: str):
         self.whole_screen.addstr(line, 0, string)
@@ -65,7 +67,8 @@ class ConsoleClient(Client):
             self.write_line(self.bandwidth_start_line + 1, f"Real network speed since last update: {self.current_bandwidth_statistics.current_network_speed:.0f}Kbits/second")
             self.write_line(self.bandwidth_start_line + 2, f"Average network use: {self.current_bandwidth_statistics.average_network_use:.0f}Kbits/second")
             self.write_line(self.bandwidth_start_line + 3, f"Total network use: {self.current_bandwidth_statistics.total_use:.0f}Kbits")
-            self.write_line(self.bandwidth_start_line + 4, f"Total monitoring duration: {self.current_bandwidth_statistics.total_duration//60}m{self.current_bandwidth_statistics.total_duration % 60}s")
+            self.write_line(self.bandwidth_start_line + 4, f"Total monitoring duration: {self.current_bandwidth_statistics.total_duration//3600}h"
+                                                           f"{self.current_bandwidth_statistics.total_duration//60}m{self.current_bandwidth_statistics.total_duration % 60}s")
 
         self.whole_screen.refresh()
 
