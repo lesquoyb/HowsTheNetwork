@@ -81,7 +81,7 @@ A new window should open with a chart in the middle and some stats in plain text
 
 ## Check internet connection
 
-To check the internet connection in real time and gather some statistics about it, the program with the options `--internet_real_time` or its alias `-irt`.
+To check the internet connection in real time and gather some statistics about it, use the option `--internet_real_time` or its alias `-irt`.
 
 If you want to log the information connection you can use the option `--file_internet` and give it a path for a file, the program will write at each internet connection check one line 
 with the timestamp followed by a comma and `True` if you had access to internet or `False` otherwise. If you find it more convenient you can use the `--datetime` option to save a
