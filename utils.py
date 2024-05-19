@@ -21,32 +21,35 @@ internet: List[Tuple[int, bool]] = []
 bandwidth: List[Tuple[int, float]] = []
 
 
-def is_internet_working(host: str = "8.8.8.8", port: int = 53, timeout: int = 3) -> bool:
+def is_internet_working(host: str = "8.8.8.8", port: int = 53, timeout: int = 3) -> float:
     """
-    Tries to connect to the host with the given port and timeout, and if successful returns True
+    Tries to connect to the host with the given port and timeout, and if successful returns the
+    time it took to connect in seconds, otherwise returns -1.0
 
     :param host: the host to connect to
     :param port: the port at which we try to connect
     :param timeout: the timeout duration in seconds
-    :return: True if the connection is successful, False otherwise
+    :return: The time it took to connect if the connection is successful, -1.0 otherwise
     """
     try:
         socket.setdefaulttimeout(timeout)
+        start = time.perf_counter()
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-        return True
+        return time.perf_counter() - start
     except socket.error as ex:
-        return False
+        return -1.0
 
 
-def get_next_disconnected_period(internet_connection_history: List[Tuple[int, bool]], start_index: int) \
+def get_next_disconnected_period(internet_connection_history: List[Tuple[int, int]], start_index: int) \
         -> Tuple[int, int]:
     """
     Starts reading the connection history at the given index and returns a pair of indices representing the
     start and end of the next disconnection period.
     In case no disconnection was found, the function returns (-1,-1)
 
-    :param internet_connection_history: the connection history, each pair represents a timestamp and a boolean
-        representing the state of the connection (True = connected, False = disconnected). The list must be ordered.
+    :param internet_connection_history: the connection history, each pair represents a timestamp and an integer
+        representing the the time it took to establish the connection (positive value = connected,
+        negative = disconnected). The list must be ordered.
     :param start_index: The index at which the search for the next disconnection period must start
     :return: a tuple where the first element is the index of the start of the next disconnection period in the history
         and the second element of the tuple is the index of the end of the next disconnection period in the history.
@@ -54,28 +57,30 @@ def get_next_disconnected_period(internet_connection_history: List[Tuple[int, bo
     """
     start = -1
     end = -1
-    for i, (_, state) in enumerate(internet_connection_history[start_index:]):
-        if not state:
+    for i, (_, ping) in enumerate(internet_connection_history[start_index:]):
+        if ping < 0:
             start = start_index + i
             end = start + 1
-            while end < len(internet_connection_history) and not internet_connection_history[end][1]:
+            while end < len(internet_connection_history) and internet_connection_history[end][1] < 0:
                 end += 1
             break
     return start, end
 
 
-def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]],
-                            expected_duration_between_checks: int) -> Tuple[int, int, float, int, float]:
+def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
+                            expected_duration_between_checks: int) -> Tuple[int, int, float, int, float, int, int, int]:
     """
-    Iterates over a history of connection/disconnection and returns basic statistics about the disconnections
+    Iterates over a history of pings and returns basic statistics about the disconnections
 
-    :param internet_connection_history: ordered list of pairs, the first item is a timestamp in second, the second a
-        boolean that is True when the connection is established and False when disconnected
+    :param internet_connection_history: ordered list of pairs, the first item is a timestamp in second, the second an
+            integer that represents the time it took to establish a connection, in case it was not possible to connect
+            its value is negative
     :param expected_duration_between_checks: the time expected between two checks, used to estimate the end of
         a disconnection period in some cases
     :return: A tuple composed in that order of: the duration in seconds of the longest disconnection, the starting time
-        in seconds of that disconnection, the average disconnection duration, the total number of disconnection, and the
-        average number of disconnection per hour
+        in seconds of that disconnection, the average disconnection duration, the total number of disconnection, the
+        average number of disconnection per hour, the minimum ping value, the maximum ping value and the average ping
+        value
     """
     longest_time: int = 0
     start_time_longest_disconnection: int = 0
@@ -91,8 +96,8 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]],
             duration = internet_connection_history[end][0] - internet_connection_history[start][0]
         else:
             # TODO: it can lead to wrong values, but it should stay a reasonable mistake in most cases
-            duration = internet_connection_history[end - 1][0] - internet_connection_history[start][
-                0] + expected_duration_between_checks
+            duration = internet_connection_history[end - 1][0] - internet_connection_history[start][0] \
+                       + expected_duration_between_checks
         average_time += duration
         if duration > longest_time:
             longest_time = duration
@@ -111,7 +116,23 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, bool]],
     if total_history_duration > 0:
         average_disconnection_per_hour = nb_disconnection / total_history_duration
 
-    return longest_time, start_time_longest_disconnection, average_time, nb_disconnection, average_disconnection_per_hour
+    # we need a separate iteration for ping processing
+
+    max_ping = -1
+    min_ping = -1
+    average_ping = 0
+    nb_pings = 0
+    for _, ping in internet_connection_history:
+        if ping > 0:
+            max_ping = max(max_ping, ping)
+            min_ping = min(min_ping, ping) if nb_pings > 0 else ping
+            average_ping += ping
+            nb_pings += 1
+    if nb_pings:
+        average_ping /= nb_pings
+
+    return longest_time, start_time_longest_disconnection, average_time, nb_disconnection, \
+           average_disconnection_per_hour, min_ping, max_ping, average_ping
 
 
 async def check_internet_loop(client: Client, host: str, port: int, timeout: int, save_real_time: bool,
@@ -122,15 +143,15 @@ async def check_internet_loop(client: Client, host: str, port: int, timeout: int
         internet_file = open(saving_file_path, "w")
 
     while True:
-        connected = is_internet_working(host, port, timeout)
+        ping = int(is_internet_working(host, port, timeout) * 1000) # we express ping in ms
         now = int(time.time())
         if save_real_time:
-            internet += [(now, connected)]
-            stats = ConnectionStatistics(connected, *get_disconnection_stats(internet, internet_check_delay))
+            internet += [(now, ping)]
+            stats = ConnectionStatistics(ping >= 0, ping, now, *get_disconnection_stats(internet, internet_check_delay))
             client.update_internet_statistics(stats)
 
         if saving_file_path:
-            internet_file.write(f"{datetime.fromtimestamp(now) if saving_as_datetime else now},{connected}\n")
+            internet_file.write(f"{datetime.fromtimestamp(now) if saving_as_datetime else now},{ping}\n")
             internet_file.flush()
 
         await asyncio.sleep(internet_check_delay)
@@ -156,7 +177,7 @@ def get_bandwidth_stats(bandwidth_history: List[Tuple[int, float]],
     current_speed = current_use / (last[0] - bandwidth_history[-2][0])
     avg = total / (last[0] - first[0])
     duration = bandwidth_history[-1][0] - bandwidth_history[0][0]
-    return BandwidthStatistics(current_use, current_speed, avg, duration, total)
+    return BandwidthStatistics(current_use, last[0], current_speed, avg, duration, total)
 
 
 async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int = 30, save_real_time: bool = True,
@@ -191,7 +212,6 @@ async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int = 30
         await asyncio.sleep(bandwidth_refresh_rate)
 
 
-
 def main_loop(client: Client, args: argparse.Namespace):
     """
     Uses the command parameters passed to the function to initialise the two main loops: checking for
@@ -202,7 +222,8 @@ def main_loop(client: Client, args: argparse.Namespace):
     :param args:
         the arguments passed to the program
     """
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     if args.internet_real_time or args.file_internet:
         loop.create_task(check_internet_loop(client, args.host, args.port, args.timeout, args.internet_real_time,
                                              args.delay_internet, args.file_internet, args.datetime))

@@ -10,7 +10,7 @@ from connection_statistics import ConnectionStatistics
 
 class ConsoleClient(Client):
 
-    CONNECTION_SCREEN_HEIGHT = 5
+    CONNECTION_SCREEN_HEIGHT = 8
     BANDWIDTH_SCREEN_HEIGHT = 5
 
     def __init__(self, connection, bandwidth):
@@ -49,12 +49,17 @@ class ConsoleClient(Client):
     def update_screen(self):
         self.whole_screen.clear()
         if self.current_connection_statistics:
-            self.write_line(0, f"current state: {'connected' if self.current_connection_statistics.currently_connected else 'not connected'}")
-            self.write_line(1, f"longest disconnection: {self.current_connection_statistics.longest_duration // 60}m{self.current_connection_statistics.longest_duration % 60:.0f}s "
+            self.write_line(0, f"Current state: {'connected' if self.current_connection_statistics.currently_connected else 'not connected'} "
+                               f"Ping: {self.current_connection_statistics.current_ping}ms")
+            self.write_line(1, f"Longest disconnection: {self.current_connection_statistics.longest_duration // 60}m{self.current_connection_statistics.longest_duration % 60:.0f}s "
                                f"at time {datetime.fromtimestamp(self.current_connection_statistics.start_longest) if self.current_connection_statistics.start_longest > 0 else 0}")
-            self.write_line(2, f"average disconnection duration: {self.current_connection_statistics.average_duration:.0f}s")
-            self.write_line(3, f"total number of disconnection: {self.current_connection_statistics.nb_disconnection}")
-            self.write_line(4, f"average number of disconnection per hour: {self.current_connection_statistics.average_nb_disc_hour:.2f}")
+            self.write_line(2, f"Average disconnection duration: {self.current_connection_statistics.average_duration:.0f}s")
+            self.write_line(3, f"Total number of disconnection: {self.current_connection_statistics.nb_disconnection}")
+            self.write_line(4, f"Average number of disconnection per hour: {self.current_connection_statistics.average_nb_disc_hour:.2f}")
+            self.write_line(5, f"Lowest ping: {self.current_connection_statistics.min_ping:.0f}ms")
+            self.write_line(6, f"Highest ping: {self.current_connection_statistics.max_ping:.0f}ms")
+            self.write_line(7, f"Average ping: {self.current_connection_statistics.average_ping:.0f}ms")
+
         if self.current_bandwidth_statistics:
             self.write_line(self.bandwidth_start_line, f"Real network use since last update: {self.current_bandwidth_statistics.current_network_use:.0f}Kbits")
             self.write_line(self.bandwidth_start_line + 1, f"Real network speed since last update: {self.current_bandwidth_statistics.current_network_speed:.0f}Kbits/second")
