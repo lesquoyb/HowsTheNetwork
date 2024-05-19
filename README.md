@@ -16,6 +16,16 @@ On windows an additional package is required for it to work in a terminal: `wind
 ```
 pip install windows-curses
 ```
+
+## For GUI mode
+There's a GUI mode, if you wish to run it you will need to install more packages: `PySide6` as well as `PySide6-Addons`. You can do so with the following commands:
+```
+pip install PySide6
+```
+```
+pip install PySide6-Addons
+```
+
 # How to run it
 
 There are currently two main feature to this project:
@@ -23,7 +33,64 @@ There are currently two main feature to this project:
   - monitor the real network use
 
 And of course the program can execute both at the same time.
-To get more information about the program parameters, check run it with the option `--help`
+To get more information about the program parameters, run it with the option `--help`
+
+## Try it in console
+
+The script to run the program in console only is `console_main.py`.
+
+### On MacOs and Linux
+run the command:
+```
+python3 console_main.py -irt -brt
+```
+### On Windows
+run the command:
+```
+python3.exe console_main.py -irt -brt
+```
+### Expected output
+
+Right after running the command you should see the first lines about the connectivity in the console, and after 20 seconds you should see something similar to this:
+![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/25b7cc74-b0b6-4449-9dff-de096c102343)
+
+## Try it in GUI
+
+The script to run the program in GUI mode is `gui_main.py`. Don't forget to install the `PySide6` dependencies mentionned above!
+
+It works with the same parameters as the console one.
+
+### On MacOs and Linux
+run the command:
+```
+python3 gui_main.py -irt -brt
+```
+### On Windows
+run the command:
+```
+python3.exe gui_main.py -irt -brt
+```
+### Expected output
+
+Right after running the command you should see the first lines about the connectivity in the console, and after 20 seconds you should see something similar to this:
+![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/25b7cc74-b0b6-4449-9dff-de096c102343)
+
+
+
+## Try it in GUI
+
+The script to run the program in console only is `console_main.py`.
+
+### On MacOs and Linux
+run the command:
+```
+python3 console_main.py -irt -brt
+```
+### On Windows
+run the command:
+```
+python3.exe console_main.py -irt -brt
+```
 
 ## Check internet connection
 
