@@ -1,3 +1,5 @@
+import curses
+
 from console_client import ConsoleClient
 from utils import *
 
@@ -10,4 +12,4 @@ if __name__ == "__main__":
         print("You have to pick at least one of those for options: internet_real_time, file_internet, "
               "bandwidth_real_time and file_bandwidth")
     else:
-        main_loop(ConsoleClient(args.internet_real_time, args.bandwidth_real_time), args)
+        curses.wrapper(main_loop(ConsoleClient(args.internet_real_time, args.bandwidth_real_time), args))
