@@ -51,14 +51,16 @@ python3.exe console_main.py -irt -brt
 ```
 ### Expected output
 
-Right after running the command you should see the first lines about the connectivity in the console, and after 20 seconds you should see something similar to this:
-![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/25b7cc74-b0b6-4449-9dff-de096c102343)
+Right after running the command you should see the first lines about the connectivity in the console, and after 30 seconds you should see something similar to this:
+![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/58482faa-ebd6-4773-add8-7b10e3d05fd6)
+
+The console will refresh itself everytime it has new data, so with the default values it would be every 10 seconds.
 
 ## Try it in GUI
 
 The script to run the program in GUI mode is `gui_main.py`. Don't forget to install the `PySide6` dependencies mentionned above!
 
-It works with the same parameters as the console one.
+It works with the same parameters as the console one. And just like the console program, it will be refreshed everytime it has new data, so by default every 10 seconds.
 
 ### On MacOs and Linux
 run the command:
