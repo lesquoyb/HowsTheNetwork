@@ -45,6 +45,18 @@ class Ui_QtClientWidget(object):
 
         self.layout_header.addWidget(self.label_connection_state)
 
+        self.label_22 = QLabel(QtClientWidget)
+        self.label_22.setObjectName(u"label_22")
+        sizePolicy.setHeightForWidth(self.label_22.sizePolicy().hasHeightForWidth())
+        self.label_22.setSizePolicy(sizePolicy)
+
+        self.layout_header.addWidget(self.label_22)
+
+        self.label_duration_state = QLabel(QtClientWidget)
+        self.label_duration_state.setObjectName(u"label_duration_state")
+
+        self.layout_header.addWidget(self.label_duration_state)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.layout_header.addItem(self.horizontalSpacer)
@@ -319,6 +331,8 @@ class Ui_QtClientWidget(object):
         QtClientWidget.setWindowTitle(QCoreApplication.translate("QtClientWidget", u"Widget", None))
         self.label_9.setText(QCoreApplication.translate("QtClientWidget", u"Currently:", None))
         self.label_connection_state.setText(QCoreApplication.translate("QtClientWidget", u"not connected", None))
+        self.label_22.setText(QCoreApplication.translate("QtClientWidget", u"for", None))
+        self.label_duration_state.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
         self.label_17.setText(QCoreApplication.translate("QtClientWidget", u"Ping:", None))
         self.label_ping.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
         self.label_19.setText(QCoreApplication.translate("QtClientWidget", u"ms", None))

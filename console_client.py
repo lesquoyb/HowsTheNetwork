@@ -7,6 +7,7 @@ from typing import Optional
 from bandwidth_statistics import BandwidthStatistics
 from client import Client
 from connection_statistics import ConnectionStatistics
+from utils import duration_to_str, kbits_to_str
 
 
 class ConsoleClient(Client):
@@ -51,11 +52,13 @@ class ConsoleClient(Client):
     def update_screen(self):
         self.whole_screen.clear()
         if self.current_connection_statistics:
-            self.write_line(0, f"Current state: {'connected' if self.current_connection_statistics.currently_connected else 'not connected'} "
+            self.write_line(0, f"Current state: "
+                               f"{'connected' if self.current_connection_statistics.currently_connected else 'not connected'} "
+                               f"for {duration_to_str(self.current_connection_statistics.current_duration)} "
                                f"Ping: {self.current_connection_statistics.current_ping}ms")
-            self.write_line(1, f"Longest disconnection: {self.current_connection_statistics.longest_duration // 60}m{self.current_connection_statistics.longest_duration % 60:.0f}s "
+            self.write_line(1, f"Longest disconnection: {duration_to_str(self.current_connection_statistics.longest_duration)} "
                                f"starting: {datetime.fromtimestamp(self.current_connection_statistics.start_longest) if self.current_connection_statistics.start_longest > 0 else 0}")
-            self.write_line(2, f"Average disconnection duration: {self.current_connection_statistics.average_duration:.0f}s")
+            self.write_line(2, f"Average disconnection duration: {duration_to_str(self.current_connection_statistics.average_duration)}")
             self.write_line(3, f"Total number of disconnection: {self.current_connection_statistics.nb_disconnection}")
             self.write_line(4, f"Average number of disconnection per hour: {self.current_connection_statistics.average_nb_disc_hour:.2f}")
             self.write_line(5, f"Lowest ping: {self.current_connection_statistics.min_ping:.0f}ms")
@@ -63,12 +66,11 @@ class ConsoleClient(Client):
             self.write_line(7, f"Average ping: {self.current_connection_statistics.average_ping:.0f}ms")
 
         if self.current_bandwidth_statistics:
-            self.write_line(self.bandwidth_start_line, f"Real network use since last update: {self.current_bandwidth_statistics.current_network_use:.0f}Kbits")
-            self.write_line(self.bandwidth_start_line + 1, f"Real network speed since last update: {self.current_bandwidth_statistics.current_network_speed:.0f}Kbits/second")
-            self.write_line(self.bandwidth_start_line + 2, f"Average network use: {self.current_bandwidth_statistics.average_network_use:.0f}Kbits/second")
-            self.write_line(self.bandwidth_start_line + 3, f"Total network use: {self.current_bandwidth_statistics.total_use:.0f}Kbits")
-            self.write_line(self.bandwidth_start_line + 4, f"Total monitoring duration: {self.current_bandwidth_statistics.total_duration//3600}h"
-                                                           f"{self.current_bandwidth_statistics.total_duration//60}m{self.current_bandwidth_statistics.total_duration % 60}s")
+            self.write_line(self.bandwidth_start_line, f"Real network use since last update: {kbits_to_str(self.current_bandwidth_statistics.current_network_use)}")
+            self.write_line(self.bandwidth_start_line + 1, f"Real network speed since last update: {kbits_to_str(self.current_bandwidth_statistics.current_network_speed)}/second")
+            self.write_line(self.bandwidth_start_line + 2, f"Average network use: {kbits_to_str(self.current_bandwidth_statistics.average_network_use)}/second")
+            self.write_line(self.bandwidth_start_line + 3, f"Total network use: {kbits_to_str(self.current_bandwidth_statistics.total_use)}")
+            self.write_line(self.bandwidth_start_line + 4, f"Total monitoring duration: {duration_to_str(self.current_bandwidth_statistics.total_duration)}")
 
         self.whole_screen.refresh()
 
@@ -85,5 +87,4 @@ class ConsoleClient(Client):
         curses.echo()
         curses.endwin()
         # we need to stop asyncio event loop to stop the program
-        loop = asyncio.get_event_loop()
-        loop.stop()
+        self.loop.stop()

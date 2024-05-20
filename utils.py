@@ -69,7 +69,7 @@ def get_next_disconnected_period(internet_connection_history: List[Tuple[int, in
 
 
 def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
-                            expected_duration_between_checks: int) -> Tuple[int, int, float, int, float, int, int, int]:
+                            expected_duration_between_checks: int) -> Tuple[int, int, int, float, int, float, int, int, int]:
     """
     Iterates over a history of pings and returns basic statistics about the disconnections
 
@@ -78,7 +78,8 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
             its value is negative
     :param expected_duration_between_checks: the time expected between two checks, used to estimate the end of
         a disconnection period in some cases
-    :return: A tuple composed in that order of: the duration in seconds of the longest disconnection, the starting time
+    :return: A tuple composed in that order of: the duration in seconds of the current state the
+        program is in, the duration in seconds of the longest disconnection, the starting time
         in seconds of that disconnection, the average disconnection duration, the total number of disconnection, the
         average number of disconnection per hour, the minimum ping value, the maximum ping value and the average ping
         value
@@ -123,16 +124,32 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
     min_ping = -1
     average_ping = 0
     nb_pings = 0
-    for _, ping in internet_connection_history:
+    latest_duration: float = 0
+    # we set the initial value at the opposite of the first, so it starts by "resetting"
+    connected: bool = internet_connection_history[0][1] < 0
+    previous = 0
+    for time, ping in internet_connection_history:
+
+        # this first part is for calculating the duration of the latest state (could be in a separate smaller loop)
+        # if the state changed we reset
+        if connected and ping < 0 or not connected and ping > 0:
+            latest_duration = 0
+            connected = ping > 0
+        else:
+            latest_duration += time - previous
+
         if ping > 0:
             max_ping = max(max_ping, ping)
             min_ping = min(min_ping, ping) if nb_pings > 0 else ping
             average_ping += ping
             nb_pings += 1
+
+        previous = time
+
     if nb_pings:
         average_ping /= nb_pings
 
-    return longest_time, start_time_longest_disconnection, average_time, nb_disconnection, \
+    return int(latest_duration), longest_time, start_time_longest_disconnection, average_time, nb_disconnection, \
            average_disconnection_per_hour, min_ping, max_ping, average_ping
 
 
@@ -212,6 +229,25 @@ async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int = 30
 
         await asyncio.sleep(bandwidth_refresh_rate)
 
+
+def kbits_to_str(kbits: float) -> str:
+    if kbits < 1024:
+        return f"{kbits:.2f}Kbits"
+    mbits = kbits / 1024
+    if mbits < 1024:
+        return f"{mbits:.2f}Mbits"
+    gbits = mbits/1024
+    if gbits < 1024:
+        return f"{gbits:.2f}Gbits"
+    return f"{gbits/1024:.2f}Tbits"
+
+def duration_to_str(duration: float) -> str:
+    if duration < 60:
+        return f"{duration:2d}s"
+    elif duration < 3600:
+        return f"{duration//60:2d}m{duration % 60:2d}"
+    else:
+        return f"{duration//3600:d}h{duration//60:2d}m{duration % 60:2d}"
 
 def main_loop(client: Client, args: argparse.Namespace, loop: AbstractEventLoop):
     """

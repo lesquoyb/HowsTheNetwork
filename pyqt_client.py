@@ -1,11 +1,9 @@
 import datetime
-import sys
 from typing import Optional, List, Tuple, Dict
 
 from PySide6.QtCharts import QChart, QLineSeries, QDateTimeAxis, QValueAxis
 from PySide6.QtCore import QDateTime, Qt
 
-import utils
 from bandwidth_statistics import BandwidthStatistics
 from client import Client
 
@@ -20,6 +18,9 @@ from qt_client import Ui_QtClientWidget
 
 
 # This class loads the pyqt_client into a qt window and takes care of filling it with proper data
+from utils import duration_to_str, kbits_to_str
+
+
 class PyQtClient(QWidget, Client):
 
     def __init__(self, parent=None):
@@ -40,8 +41,8 @@ class PyQtClient(QWidget, Client):
         self.add_ping_y_axis()
         self.add_timeseries("Speed")
         self.add_speed_y_axis()
-
         # TODO: set an icon or remove the icon from title bar
+
 
     def add_ping_y_axis(self):
         axis_y = QValueAxis()
@@ -73,7 +74,7 @@ class PyQtClient(QWidget, Client):
         series.setName(name)
 
         self.series[name] = series
-        self.chart.addSeries(series)
+        #self.chart.addSeries(series)
 
         series.attachAxis(self.axis_x)
 
@@ -100,8 +101,8 @@ class PyQtClient(QWidget, Client):
         else:
             self.ui.label_connection_state.setText("Not connected")
 
-        self.ui.label_longest_duration.setText(f"{stats.longest_duration // 60:.0f}m{stats.longest_duration % 60:.0f}s")
-        self.ui.label_average_disconnection_time.setText(f"{stats.average_duration // 60:.0f}m{stats.average_duration % 60:.0f}s")
+        self.ui.label_longest_duration.setText(f"{duration_to_str(stats.longest_duration)}")
+        self.ui.label_average_disconnection_time.setText(f"{duration_to_str(stats.average_duration)}")
         self.ui.label_nb_disconnections.setText(str(stats.nb_disconnection))
         self.ui.label_average_nb_disconnection_hour.setText(f"{stats.average_nb_disc_hour:.2f}")
 
@@ -109,16 +110,19 @@ class PyQtClient(QWidget, Client):
         self.ui.label_lowest_ping.setText(f"{stats.min_ping}")
         self.ui.label_highest_ping.setText(f"{stats.max_ping}")
         self.ui.label_average_ping.setText(f"{stats.average_ping:.0f}")
+        #
+        # self.series["Ping"].append(stats.current_time, stats.current_ping)
+        # self.chart.addSeries(self.series["Ping"])
 
-        self.series["Ping"].append(stats.current_time, stats.current_ping)
 
 
     def update_bandwidth_statistics(self, stats: BandwidthStatistics):
         self.update_time(stats.current_time)
-        self.ui.label_current_use.setText(f"{stats.current_network_use:.2f}")
-        self.ui.label_current_speed.setText(f"{stats.current_network_speed:.2f}")
-        self.ui.label_average_use.setText(f"{stats.average_network_use:.2f}")
-        self.ui.label_total_use.setText(f"{stats.total_use:.0f}")
+        self.ui.label_current_use.setText(f"{kbits_to_str(stats.current_network_use)}")
+        self.ui.label_current_speed.setText(f"{kbits_to_str(stats.current_network_speed)}/second")
+        self.ui.label_average_use.setText(f"{kbits_to_str(stats.average_network_use)}/second")
+        self.ui.label_total_use.setText(f"{kbits_to_str(stats.total_use)}")
 
-        self.series["Speed"].append(stats.current_time, stats.current_network_speed)
+        # self.series["Speed"].append(stats.current_time, stats.current_network_speed)
+        # self.chart.addSeries(self.series["Speed"])
 
