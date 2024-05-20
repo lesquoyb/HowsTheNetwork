@@ -18,12 +18,9 @@ pip install windows-curses
 ```
 
 ## For GUI mode
-There's a GUI mode, if you wish to run it you will need to install more packages: `PySide6` as well as `PySide6-Addons`. You can do so with the following commands:
+There's a GUI mode, if you wish to run it you will need to install one more package: `PySide6`. You can do so with the following commands:
 ```
 pip install PySide6
-```
-```
-pip install PySide6-Addons
 ```
 
 # How to run it
