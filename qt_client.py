@@ -216,26 +216,6 @@ class Ui_QtClientWidget(object):
 
         self.layout_bandwidth_stats.addWidget(self.label_current_speed, 1, 1, 1, 1)
 
-        self.label = QLabel(QtClientWidget)
-        self.label.setObjectName(u"label")
-
-        self.layout_bandwidth_stats.addWidget(self.label, 0, 2, 1, 1)
-
-        self.label_4 = QLabel(QtClientWidget)
-        self.label_4.setObjectName(u"label_4")
-
-        self.layout_bandwidth_stats.addWidget(self.label_4, 1, 2, 1, 1)
-
-        self.label_7 = QLabel(QtClientWidget)
-        self.label_7.setObjectName(u"label_7")
-
-        self.layout_bandwidth_stats.addWidget(self.label_7, 2, 2, 1, 1)
-
-        self.label_total_use_unit = QLabel(QtClientWidget)
-        self.label_total_use_unit.setObjectName(u"label_total_use_unit")
-
-        self.layout_bandwidth_stats.addWidget(self.label_total_use_unit, 3, 2, 1, 1)
-
 
         self.layout_stats.addLayout(self.layout_bandwidth_stats)
 
@@ -355,10 +335,6 @@ class Ui_QtClientWidget(object):
         self.label_total_use.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
         self.label_current_use.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
         self.label_current_speed.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
-        self.label.setText(QCoreApplication.translate("QtClientWidget", u"Kbits", None))
-        self.label_4.setText(QCoreApplication.translate("QtClientWidget", u"Kbits/s", None))
-        self.label_7.setText(QCoreApplication.translate("QtClientWidget", u"Kbits/s", None))
-        self.label_total_use_unit.setText(QCoreApplication.translate("QtClientWidget", u"Kbits", None))
         self.label_8.setText(QCoreApplication.translate("QtClientWidget", u"Lowest ping", None))
         self.label_lowest_ping.setText(QCoreApplication.translate("QtClientWidget", u"...", None))
         self.label_18.setText(QCoreApplication.translate("QtClientWidget", u"ms", None))

@@ -241,13 +241,14 @@ def kbits_to_str(kbits: float) -> str:
         return f"{gbits:.2f}Gbits"
     return f"{gbits/1024:.2f}Tbits"
 
+
 def duration_to_str(duration: float) -> str:
     if duration < 60:
-        return f"{duration:2d}s"
+        return f"{duration:2.0f}s"
     elif duration < 3600:
-        return f"{duration//60:2d}m{duration % 60:2d}"
+        return f"{duration//60:2.0f}m{duration % 60:2.0f}"
     else:
-        return f"{duration//3600:d}h{duration//60:2d}m{duration % 60:2d}"
+        return f"{duration//3600}h{duration//60:2.0f}m{duration % 60:2.0f}"
 
 def main_loop(client: Client, args: argparse.Namespace, loop: AbstractEventLoop):
     """
