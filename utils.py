@@ -244,11 +244,11 @@ def kbits_to_str(kbits: float) -> str:
 
 def duration_to_str(duration: float) -> str:
     if duration < 60:
-        return f"{duration:2.0f}s"
+        return f"{duration:02.0f}s"
     elif duration < 3600:
-        return f"{duration//60:2.0f}m{duration % 60:2.0f}"
+        return f"{duration//60:02.0f}m{duration % 60:02.0f}"
     else:
-        return f"{duration//3600}h{duration//60:2.0f}m{duration % 60:2.0f}"
+        return f"{duration//3600}h{(duration % 3600) //60:02.0f}m{duration % 60:02.0f}s"
 
 def main_loop(client: Client, args: argparse.Namespace, loop: AbstractEventLoop):
     """
@@ -310,5 +310,4 @@ def init_arguments() -> argparse.Namespace:
                                                                 "of a datetime instead of the default timestamp.")
 
     return parser.parse_args()
-
 
