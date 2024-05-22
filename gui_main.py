@@ -7,7 +7,6 @@ from PySide6.QtWidgets import QApplication
 
 from pyqt_client import PyQtClient
 from utils import init_arguments, main_loop
-import qasync
 
 if __name__ == "__main__":
 
