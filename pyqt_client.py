@@ -1,9 +1,6 @@
-import asyncio
 import datetime
-import threading
 from typing import Optional, List, Tuple, Dict
 
-import qasync
 from PySide6.QtCharts import QChart, QLineSeries, QDateTimeAxis, QValueAxis
 from PySide6.QtCore import QDateTime, Qt
 from PySide6.QtGui import QColor
