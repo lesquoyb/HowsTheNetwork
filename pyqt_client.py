@@ -4,7 +4,7 @@ import threading
 from typing import Optional, List, Tuple, Dict
 
 import qasync
-from PySide6.QtCharts import QChart, QLineSeries, QDateTimeAxis, QValueAxis
+from PySide6.QtCharts import QChart, QLineSeries, QDateTimeAxis, QValueAxis, QLogValueAxis
 from PySide6.QtCore import QDateTime, Qt
 from PySide6.QtGui import QColor
 
@@ -81,18 +81,15 @@ class PyQtClient(QWidget, Client):
         self.ping_axis_y.setLabelFormat("%.0f")
         self.ping_axis_y.setTitleText("Ping (ms)")
         self.ping_axis_y.setTitleBrush(QColor(255,0,0))
-        self.ping_axis_y.setMin(0)
         self.chart.addAxis(self.ping_axis_y, Qt.AlignmentFlag.AlignLeft)
         self.series["Ping"].attachAxis(self.ping_axis_y)
         self.series["Ping"].setColor(QColor(255,0,0))
 
     def add_speed_y_axis(self):
-        self.speed_axis_y = QValueAxis()
-        self.speed_axis_y.setTickCount(10)
+        self.speed_axis_y = QLogValueAxis()
         self.speed_axis_y.setLabelFormat("%.0f")
         self.speed_axis_y.setTitleText("Speed (KBits/s)")
         self.speed_axis_y.setTitleBrush(QColor(0,255,0))
-        self.speed_axis_y.setMin(0)
         self.chart.addAxis(self.speed_axis_y, Qt.AlignmentFlag.AlignRight)
         self.series["Speed"].attachAxis(self.speed_axis_y)
         self.series["Speed"].setColor(QColor(0,255,0))
@@ -126,6 +123,7 @@ class PyQtClient(QWidget, Client):
             self.ui.label_end_time.setText(str(datetime.datetime.fromtimestamp(timestamp)))
             self.axis_x.setMax(QDateTime.fromSecsSinceEpoch(timestamp))
 
+    min_ping = -1
     def update_internet_statistics(self, stats: ConnectionStatistics):
 
         self.update_time(stats.current_time)
@@ -147,22 +145,27 @@ class PyQtClient(QWidget, Client):
         self.ui.label_highest_ping.setText(f"{stats.max_ping}")
         self.ui.label_average_ping.setText(f"{stats.average_ping:.0f}")
 
-        self.series["Ping"].append(stats.current_time, stats.current_ping)
+        self.series["Ping"].append(stats.current_time, stats.current_ping if stats.current_ping > 0 else 0)
+        if self.min_ping < 0:
+            self.min_ping = max(0, stats.current_ping)
+        self.min_ping = min(self.min_ping, max(0, stats.current_ping))
+        self.ping_axis_y.setMin(self.min_ping)
         self.ping_axis_y.setMax(max(self.ping_axis_y.max(), stats.current_ping))
-
         self.chart.removeSeries(self.series["Ping"])
         self.chart.addSeries(self.series["Ping"])
 
-
+    min_speed: int = -1
     def update_bandwidth_statistics(self, stats: BandwidthStatistics):
         self.update_time(stats.current_time)
         self.ui.label_current_use.setText(f"{kbits_to_str(stats.current_network_use)}")
         self.ui.label_current_speed.setText(f"{kbits_to_str(stats.current_network_speed)}/second")
         self.ui.label_average_use.setText(f"{kbits_to_str(stats.average_network_use)}/second")
         self.ui.label_total_use.setText(f"{kbits_to_str(stats.total_use)}")
-
         self.series["Speed"].append(stats.current_time, stats.current_network_speed)
-        self.speed_axis_y.setMax(max(self.ping_axis_y.max(), stats.current_network_speed))
+        if self.min_speed < 0:
+            self.min_speed = max(0, stats.current_network_speed)
+        self.min_speed = min(self.min_speed, stats.current_network_speed)
+        self.speed_axis_y.setMin(self.min_speed)
+        self.speed_axis_y.setMax(max(self.speed_axis_y.max(), stats.current_network_speed))
         self.chart.removeSeries(self.series["Speed"])
         self.chart.addSeries(self.series["Speed"])
-

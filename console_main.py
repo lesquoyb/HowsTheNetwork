@@ -11,9 +11,11 @@ if __name__ == "__main__":
     args = init_arguments()
 
     if not args.internet_real_time and not args.file_internet \
-            and not args.bandwidth_real_time and not args.file_bandwidth:
-        print("You have to pick at least one of those for options: internet_real_time, file_internet, "
-              "bandwidth_real_time and file_bandwidth")
+            and not args.bandwidth_real_time and not args.file_bandwidth \
+            and not args.read_internet_file and not args.read_bandwidth_file:
+        print("You have to pick at least one of those options: internet_real_time, file_internet, "
+              "bandwidth_real_time, file_bandwidth, read_internet_file, read_bandwidth_file")
+        exit(-1)
     else:
 
         try:

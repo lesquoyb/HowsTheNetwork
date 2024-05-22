@@ -49,7 +49,7 @@ def get_next_disconnected_period(internet_connection_history: List[Tuple[int, in
     In case no disconnection was found, the function returns (-1,-1)
 
     :param internet_connection_history: the connection history, each pair represents a timestamp and an integer
-        representing the the time it took to establish the connection (positive value = connected,
+        representing the time it took to establish the connection (positive value = connected,
         negative = disconnected). The list must be ordered.
     :param start_index: The index at which the search for the next disconnection period must start
     :return: a tuple where the first element is the index of the start of the next disconnection period in the history
@@ -154,11 +154,11 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
 
 
 async def check_internet_loop(client: Client, host: str, port: int, timeout: int, save_real_time: bool,
-                              internet_check_delay: int = 10, saving_file_path: str = None,
-                              saving_as_datetime: bool = False):
+                              internet_check_delay: int, saving_file_path: str,
+                              saving_as_datetime: bool):
     global internet
     if saving_file_path:
-        internet_file = open(saving_file_path, "w")
+        internet_file = open(saving_file_path, "a")
 
     while True:
         ping = int(is_internet_working(host, port, timeout) * 1000) # we express ping in ms
@@ -182,7 +182,7 @@ def bytes_to_kbits(value: int) -> float:
     :param value: a number of bytes
     :return: the conversion in Kilo bit
     """
-    return value / 1024. / 1024. * 8
+    return value / 1024. * 8
 
 
 def get_bandwidth_stats(bandwidth_history: List[Tuple[int, float]],
@@ -190,42 +190,45 @@ def get_bandwidth_stats(bandwidth_history: List[Tuple[int, float]],
     # bandwidth always has a size of 2 or more so no index checking necessary
     first = bandwidth_history[0]
     last = bandwidth_history[-1]
-    total = bytes_to_kbits(last[1])
-    current_use = bytes_to_kbits(last[1] - bandwidth_history[-2][1])
-    current_speed = current_use / (last[0] - bandwidth_history[-2][0])
-    avg = total / (last[0] - first[0])
-    duration = bandwidth_history[-1][0] - bandwidth_history[0][0]
+    total = last[1]
+    if len(bandwidth_history) > 1:
+        current_use = last[1] - bandwidth_history[-2][1]
+        current_speed = current_use / (last[0] - bandwidth_history[-2][0])
+        avg = total / (last[0] - first[0])
+    else:
+        current_use = last[1]
+        current_speed = current_use / expected_duration_between_checks
+        avg = current_speed
+    duration = last[0] - first[0]
     return BandwidthStatistics(current_use, last[0], current_speed, avg, duration, total)
 
 
-async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int = 30, save_real_time: bool = True,
-                                saving_bandwidth_file: str = "bandwidth.csv", saving_as_datetime: bool = True):
+def get_total_kbits_use_since_boot():
+    return bytes_to_kbits(psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv)
+
+
+async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int, save_real_time: bool,
+                                saving_bandwidth_file: str, saving_as_datetime: bool, initial_bandwidth_use: int):
     global bandwidth
     old_value = 0
-    old_time = 0
 
     if saving_bandwidth_file:
-        bandwidth_file = open(saving_bandwidth_file, "w")
+        bandwidth_file = open(saving_bandwidth_file, "a")
 
     while True:
 
-        new_value = psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv
+        new_value = get_total_kbits_use_since_boot() - initial_bandwidth_use
         new_time = int(time.time())
         if save_real_time:
             bandwidth += [(new_time, new_value)]
 
-        if old_value:
-            use_per_second = (new_value - old_value) / (new_time - old_time)
-            if saving_bandwidth_file:
-                bandwidth_file.write(f"{datetime.fromtimestamp(new_time) if saving_as_datetime else new_time},"
-                                     f"{round(bytes_to_kbits(use_per_second))}\n")
-                bandwidth_file.flush()
-            if save_real_time:
-                stats = get_bandwidth_stats(bandwidth, bandwidth_refresh_rate)
-                client.update_bandwidth_statistics(stats)
-
-        old_value = new_value
-        old_time = new_time
+        if saving_bandwidth_file:
+            bandwidth_file.write(f"{datetime.fromtimestamp(new_time) if saving_as_datetime else new_time},"
+                                 f"{round(new_value)}\n")
+            bandwidth_file.flush()
+        if save_real_time:
+            stats = get_bandwidth_stats(bandwidth, bandwidth_refresh_rate)
+            client.update_bandwidth_statistics(stats)
 
         await asyncio.sleep(bandwidth_refresh_rate)
 
@@ -250,6 +253,40 @@ def duration_to_str(duration: float) -> str:
     else:
         return f"{duration//3600}h{(duration % 3600) //60:02.0f}m{duration % 60:02.0f}s"
 
+
+def read_internet_file(client: Client, read_internet_file: str, save_real_time: bool, delay_internet: int):
+    global internet
+
+    pings = internet if save_real_time else []
+
+    f = open(read_internet_file, "r")
+    for timestamp, ping in [[int(i) for i in line.split(",")] for line in f.readlines()]:
+        pings += [(timestamp, ping)]
+        stats = ConnectionStatistics(ping >= 0, ping, timestamp, *get_disconnection_stats(pings, delay_internet))
+        # TODO: it shouldn't be the default delay, we could update an average through the reading to get an approximate
+        client.update_internet_statistics(stats)
+
+    if save_real_time:
+        pings.sort()# just to make sure we don't mess with incoming data
+    f.close()
+
+
+def read_bandwidth_file(client: Client, read_bandwidth_file: str, save_real_time: bool, delay_bandwidth: int):
+    global bandwidth
+
+    usage = bandwidth if save_real_time else []
+
+    f = open(read_bandwidth_file, "r")
+    for timestamp, use in [[int(i) for i in line.split(",")] for line in f.readlines()]:
+        usage += [(timestamp, use)]
+        stats = get_bandwidth_stats(usage, delay_bandwidth)
+        # TODO: it shouldn't be the default delay, we could update an average by reading the file to get an approximate
+        client.update_bandwidth_statistics(stats)
+
+    if save_real_time:
+        usage.sort() # just to make sure we don't mess with incoming data
+    f.close()
+
 def main_loop(client: Client, args: argparse.Namespace, loop: AbstractEventLoop):
     """
     Uses the command parameters passed to the function to initialise the two main loops: checking for
@@ -261,12 +298,17 @@ def main_loop(client: Client, args: argparse.Namespace, loop: AbstractEventLoop)
         the arguments passed to the program
     """
     asyncio.set_event_loop(loop)
+    if args.read_internet_file:
+        read_internet_file(client, args.read_internet_file, args.internet_real_time, args.delay_internet)
+    if args.read_bandwidth_file:
+        read_bandwidth_file(client, args.read_bandwidth_file, args.bandwidth_real_time, args.delay_bandwidth)
     if args.internet_real_time or args.file_internet:
         loop.create_task(check_internet_loop(client, args.host, args.port, args.timeout, args.internet_real_time,
                                              args.delay_internet, args.file_internet, args.datetime))
     if args.bandwidth_real_time or args.file_bandwidth:
+        initial_bandwidth_use = get_total_kbits_use_since_boot()
         loop.create_task(check_bandwidth_usage(client, args.delay_bandwidth, args.bandwidth_real_time,
-                                               args.file_bandwidth, args.datetime))
+                                               args.file_bandwidth, args.datetime, initial_bandwidth_use))
     loop.run_forever()
 
 
@@ -308,6 +350,12 @@ def init_arguments() -> argparse.Namespace:
     # general options
     parser.add_argument("--datetime", action="store_true", help="Use to save the time in files in the format "
                                                                 "of a datetime instead of the default timestamp.")
+
+    # file reading
+    parser.add_argument("-rif", "--read-internet-file", type=str, required=False, help="Use this option to read a "
+                                                                                       "previously saved internet file.")
+    parser.add_argument("-rbf", "--read-bandwidth-file", type=str, required=False, help="Use this option to read a "
+                                                                                        "previously saved bandwidth file.")
 
     return parser.parse_args()
 

@@ -2,7 +2,7 @@
 
 class BandwidthStatistics:
 
-    def __init__(self, current_use: float, current_time: int, current_speed: float, avg_use: float, total_duration: int, total_use):
+    def __init__(self, current_use: float, current_time: int, current_speed: float, avg_use: float, total_duration: int, total_use: float):
         self.current_network_use = current_use
         self.current_time = current_time
         self.current_network_speed = current_speed
