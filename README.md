@@ -50,7 +50,7 @@ python3.exe main_console.py -irt -brt
 ### Expected output
 
 Right after running the command you should see the first lines about the connectivity in the console, and after 30 seconds you should see something similar to this:
-![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/58482faa-ebd6-4773-add8-7b10e3d05fd6)
+![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/c662ad75-fb00-4220-9d3c-5094d5c944f6)
 
 The console will refresh itself everytime it has new data, so with the default values it would be every 10 seconds.
 
@@ -75,7 +75,7 @@ python3.exe main_gui.py -irt -brt
 ### Expected output
 
 A new window should open with a chart in the middle and some stats in plain text above and under it. This should look something like this:
-![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/c662ad75-fb00-4220-9d3c-5094d5c944f6)
+![image](https://github.com/lesquoyb/HowsTheNetwork/assets/6374469/17515510-c49d-4cd3-b9a1-90d9a4813cc7)
 
 
 ## Check internet connection
