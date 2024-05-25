@@ -1,6 +1,7 @@
 # How's The Network
 This python program is aimed at gathering real-time data on one's computer internet connection, mainly: is internet available and what is this device's real use of the bandwidth.
-My personal use case is to run it on a raspberry pi just next to my router to have real data on my connection's quality.
+My personal use case is to run it on a raspberry pi pluged directly to my router as a witness of what's the best case scenario and other instances on other computers in the house to compare and get real data on my connection's quality.
+
 
 
 # Requirements
