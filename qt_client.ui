@@ -433,7 +433,7 @@
   <customwidget>
    <class>QChartView</class>
    <extends>QGraphicsView</extends>
-   <header>PySide6.QtCharts</header>
+   <header>PySide2.QtCharts.QtCharts</header>
   </customwidget>
  </customwidgets>
  <resources/>

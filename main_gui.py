@@ -3,7 +3,7 @@ import sys
 import threading
 from typing import Optional
 
-from PySide6.QtWidgets import QApplication
+from PySide2.QtWidgets import QApplication
 
 from pyqt_client import PyQtClient
 from utils import init_arguments, main_loop
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         thread.start()
 
     widget.show()
-    ret = app.exec()
+    ret = app.exec_()
 
     asyncio.get_event_loop().stop()
     sys.exit(ret)

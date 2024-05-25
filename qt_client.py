@@ -3,21 +3,17 @@
 ################################################################################
 ## Form generated from reading UI file 'qt_client.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.0
+## Created by: Qt User Interface Compiler version 5.15.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCharts import QChartView
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QGridLayout, QHBoxLayout, QLabel,
-    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+
+from PySide2.QtCharts import *
+
 
 class Ui_QtClientWidget(object):
     def setupUi(self, QtClientWidget):
@@ -30,7 +26,7 @@ class Ui_QtClientWidget(object):
         self.layout_header.setObjectName(u"layout_header")
         self.label_9 = QLabel(QtClientWidget)
         self.label_9.setObjectName(u"label_9")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_9.sizePolicy().hasHeightForWidth())
@@ -57,7 +53,7 @@ class Ui_QtClientWidget(object):
 
         self.layout_header.addWidget(self.label_duration_state)
 
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.layout_header.addItem(self.horizontalSpacer)
 
@@ -74,13 +70,13 @@ class Ui_QtClientWidget(object):
 
         self.layout_header.addWidget(self.label_ping)
 
-        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.layout_header.addItem(self.horizontalSpacer_3)
 
         self.label_start_time = QLabel(QtClientWidget)
         self.label_start_time.setObjectName(u"label_start_time")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
         sizePolicy1.setHeightForWidth(self.label_start_time.sizePolicy().hasHeightForWidth())
@@ -103,7 +99,7 @@ class Ui_QtClientWidget(object):
 
         self.verticalLayout.addLayout(self.layout_header)
 
-        self.view_data = QChartView(QtClientWidget)
+        self.view_data = QtCharts.QChartView(QtClientWidget)
         self.view_data.setObjectName(u"view_data")
 
         self.verticalLayout.addWidget(self.view_data)
@@ -159,7 +155,7 @@ class Ui_QtClientWidget(object):
 
         self.layout_stats.addLayout(self.layout_connection_stats)
 
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.layout_stats.addItem(self.horizontalSpacer_2)
 
@@ -232,7 +228,7 @@ class Ui_QtClientWidget(object):
 
         self.layout_ping.addWidget(self.label_lowest_ping)
 
-        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.layout_ping.addItem(self.horizontalSpacer_4)
 
@@ -251,7 +247,7 @@ class Ui_QtClientWidget(object):
 
         self.layout_ping.addWidget(self.label_highest_ping)
 
-        self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.layout_ping.addItem(self.horizontalSpacer_5)
 

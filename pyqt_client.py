@@ -1,14 +1,14 @@
 import datetime
-from typing import Optional, List, Tuple, Dict
+from typing import Optional, Dict
 
-from PySide6.QtCharts import QChart, QLineSeries, QDateTimeAxis, QValueAxis, QLogValueAxis
-from PySide6.QtCore import QDateTime, Qt
-from PySide6.QtGui import QColor, QPalette
+from PySide2.QtCharts import *
+from PySide2.QtCore import QDateTime, Qt
+from PySide2.QtGui import QColor, QPalette
 
 from bandwidth_statistics import BandwidthStatistics
 from client import Client
 
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide2.QtWidgets import QWidget
 
 # Important:
 # You need to run the following command to generate the qt_client.py file
@@ -37,11 +37,11 @@ class PyQtClient(QWidget, Client):
         self.start_time: Optional[int] = None
         self.end_time: Optional[int] = None
         self.chart = self.ui.view_data.chart()
-        self.series: Dict[str, QLineSeries] = {}
+        self.series: Dict[str, QtCharts.QLineSeries] = {}
 
-        self.chart.setAnimationOptions(QChart.AnimationOption.NoAnimation)
+        #self.chart.setAnimationOptions(QtCharts.AnimationOption.NoAnimation)
 
-        self.axis_x = QDateTimeAxis()
+        self.axis_x = QtCharts.QDateTimeAxis()
         self.add_date_axis()
         self.add_timeseries("Ping")
         self.add_ping_y_axis()
@@ -53,7 +53,7 @@ class PyQtClient(QWidget, Client):
 
 
     def add_ping_y_axis(self):
-        self.ping_axis_y = QValueAxis()
+        self.ping_axis_y = QtCharts.QValueAxis()
         self.ping_axis_y.setTickCount(10)
         self.ping_axis_y.setLabelFormat("%.0f")
         self.ping_axis_y.setTitleText("Ping (ms)")
@@ -64,7 +64,7 @@ class PyQtClient(QWidget, Client):
         self.series["Ping"].setColor(self.PING_COLOR)
 
     def add_speed_y_axis(self):
-        self.speed_axis_y = QValueAxis() #TODO: removing it temporarely because it doesn't work QLogValueAxis()
+        self.speed_axis_y = QtCharts.QValueAxis() #TODO: removing it temporarely because it doesn't work QLogValueAxis()
         self.speed_axis_y.setLabelFormat("%.0f")
         self.ping_axis_y.setTickCount(10)
         self.speed_axis_y.setTitleText("Speed (Kbits/s)")
@@ -82,7 +82,7 @@ class PyQtClient(QWidget, Client):
 
     def add_timeseries(self, name):
 
-        series = QLineSeries()
+        series = QtCharts.QLineSeries()
         series.setName(name)
 
         self.series[name] = series
@@ -103,11 +103,11 @@ class PyQtClient(QWidget, Client):
             self.ui.label_end_time.setText(str(datetime.datetime.fromtimestamp(timestamp)))
             self.axis_x.setMax(QDateTime.fromSecsSinceEpoch(timestamp))
 
+
     def update_internet_statistics(self, stats: ConnectionStatistics):
 
         self.update_time(stats.current_time)
 
-        # TODO: add colors
         connected_palette = QPalette()
         if stats.currently_connected:
             self.ui.label_connection_state.setText("Connected")
@@ -137,7 +137,6 @@ class PyQtClient(QWidget, Client):
         self.chart.removeSeries(self.series["Ping"])
         self.chart.addSeries(self.series["Ping"])
 
-
     def update_bandwidth_statistics(self, stats: BandwidthStatistics):
         self.update_time(stats.current_time)
         self.ui.label_current_use.setText(f"{kbits_to_str(stats.current_network_use)}")
@@ -146,7 +145,7 @@ class PyQtClient(QWidget, Client):
         self.ui.label_total_use.setText(f"{kbits_to_str(stats.total_use)}")
         self.series["Speed"].append(stats.current_time, stats.current_network_speed)
         if self.min_speed < 0:
-            self.min_speed = max(0, stats.current_network_speed)
+            self.min_speed = max(0.0, stats.current_network_speed)
         self.min_speed = min(self.min_speed, stats.current_network_speed)
         self.speed_axis_y.setMin(self.min_speed)
         self.speed_axis_y.setMax(max(self.speed_axis_y.max(), stats.current_network_speed))
