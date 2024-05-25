@@ -19,6 +19,10 @@ pip install windows-curses
 ```
 
 ## For GUI mode
+
+> [!WARNING]
+> The GUI has been built with Qt6, which for now is not available on raspberry, so raspberry users can only enjoy the console mode currently
+
 There's a GUI mode, if you wish to run it you will need to install one more package: `PySide6`. You can do so with the following commands:
 ```
 pip install PySide6
