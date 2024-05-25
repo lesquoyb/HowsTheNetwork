@@ -306,13 +306,13 @@ def main_loop(client: Client, args: argparse.Namespace, loop: AbstractEventLoop)
         read_internet_file(client, args.read_internet_file, args.internet_real_time, args.delay_internet)
     if args.read_bandwidth_file:
         read_bandwidth_file(client, args.read_bandwidth_file, args.bandwidth_real_time, args.delay_bandwidth)
-    if args.internet_real_time or args.file_internet:
+    if args.internet_real_time or args.internet_file:
         loop.create_task(check_internet_loop(client, args.host, args.port, args.timeout, args.internet_real_time,
-                                             args.delay_internet, args.file_internet, args.datetime))
-    if args.bandwidth_real_time or args.file_bandwidth:
+                                             args.delay_internet, args.internet_file, args.datetime))
+    if args.bandwidth_real_time or args.bandwidth_file:
         initial_bandwidth_use = get_total_kbits_use_since_boot()
         loop.create_task(check_bandwidth_usage(client, args.delay_bandwidth, args.bandwidth_real_time,
-                                               args.file_bandwidth, args.datetime, initial_bandwidth_use))
+                                               args.bandwidth_file, args.datetime, initial_bandwidth_use))
     loop.run_forever()
 
 
@@ -338,7 +338,7 @@ def init_arguments() -> argparse.Namespace:
                                                                                   "overview of your network "
                                                                                   "connections and disconnections "
                                                                                   "to the internet")
-    parser.add_argument("-fi", "--file-internet", type=str, required=False, help="Use this option to save the internet "
+    parser.add_argument("-if", "--internet-file", type=str, required=False, help="Use this option to save the internet "
                                                                                  "connection data into a file")
 
     # Parameters for bandwidth checks
@@ -348,7 +348,7 @@ def init_arguments() -> argparse.Namespace:
     parser.add_argument("-brt", "--bandwidth-real-time", action="store_true", help="Use this option to get real time "
                                                                                    "overview of your network bandwidth "
                                                                                    "usage.")
-    parser.add_argument("-fb", "--file-bandwidth", type=str, required=False, help="Use this option to save the "
+    parser.add_argument("-bf", "--bandwidth-file", type=str, required=False, help="Use this option to save the "
                                                                                   "bandwidth use data into a file.")
 
     # general options

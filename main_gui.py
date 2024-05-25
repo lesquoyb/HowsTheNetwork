@@ -16,8 +16,8 @@ if __name__ == "__main__":
 
     args = init_arguments()
     thread: Optional[threading.Thread] = None
-    if not args.internet_real_time and not args.file_internet \
-            and not args.bandwidth_real_time and not args.file_bandwidth \
+    if not args.internet_real_time and not args.internet_file \
+            and not args.bandwidth_real_time and not args.bandwidth_file \
             and not args.read_internet_file and not args.read_bandwidth_file:
         print("You have to pick at least one of those options: internet_real_time, file_internet, "
               "bandwidth_real_time, file_bandwidth, read_internet_file, read_bandwidth_file")
