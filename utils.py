@@ -98,8 +98,7 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
             duration = internet_connection_history[end][0] - internet_connection_history[start][0]
         else:
             # TODO: it can lead to wrong values, but it should stay a reasonable mistake in most cases
-            duration = internet_connection_history[end - 1][0] - internet_connection_history[start][0] \
-                       + expected_duration_between_checks
+            duration = internet_connection_history[end-1][0] - internet_connection_history[start][0]
         average_time += duration
         if duration > longest_time:
             longest_time = duration
@@ -210,7 +209,6 @@ def get_total_kbits_use_since_boot():
 async def check_bandwidth_usage(client: Client, bandwidth_refresh_rate: int, save_real_time: bool,
                                 saving_bandwidth_file: str, saving_as_datetime: bool, initial_bandwidth_use: int):
     global bandwidth
-    old_value = 0
 
     if saving_bandwidth_file:
         bandwidth_file = open(saving_bandwidth_file, "a")
@@ -245,9 +243,15 @@ def kbits_to_str(kbits: float) -> str:
     return f"{gbits/1024:.2f}Tbits"
 
 
+def ping_to_str(ping: float) -> str:
+    if ping > 0:
+        return f"{ping:.0f}ms"
+    else:
+        return "timeout"
+
 def duration_to_str(duration: float) -> str:
     if duration < 60:
-        return f"{duration:02.0f}s"
+        return f"{duration:.0f}s"
     elif duration < 3600:
         return f"{duration//60:02.0f}m{duration % 60:02.0f}"
     else:
