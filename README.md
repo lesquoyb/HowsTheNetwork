@@ -24,6 +24,9 @@ pip install windows-curses
 > [!WARNING]
 > The GUI has been built with Qt6, which for now is not available on raspberry, so raspberry users can only enjoy the console mode currently
 
+> [!WARNING]
+> In GUI mode when plotting both ping and connection speed, the chart is only correct when both data are updated at the same time. For example once every 30 seconds if the ping is updated every 10 seconds and the speed every 30 seconds. This problem only concerns the display of the last value of the series that has not been updated, which will be displayed at the very right side of the chart, as if it was just updated. If it's important for you to always have a perfectly accurate display and both values, consider setting the refreshing delay for those two things to the same value.
+
 There's a GUI mode, if you wish to run it you will need to install one more package: `PySide6`. You can do so with the following commands:
 ```
 pip install PySide6
