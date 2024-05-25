@@ -1,10 +1,10 @@
 
 class ConnectionStatistics:
 
-    def __init__(self, currently_connected: bool, current_ping: int, current_time: int, current_duration: int, longest: float, start_time: float, avg_dur: float,
-                 nb_disc: int, avg_disc_hour: float, min_ping: int, max_ping: int, average_ping: int):
+    def __init__(self, current_ping: int, current_time: int, current_duration: int, longest: float, start_time: float,
+                 avg_dur: float, nb_disc: int, avg_disc_hour: float, min_ping: int, max_ping: int, average_ping: int):
 
-        self.currently_connected = currently_connected
+        self.currently_connected = current_ping > 0
         self.current_ping = current_ping
         self.current_time = current_time
         self.current_duration = current_duration

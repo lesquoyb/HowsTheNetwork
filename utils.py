@@ -69,7 +69,7 @@ def get_next_disconnected_period(internet_connection_history: List[Tuple[int, in
 
 
 def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
-                            expected_duration_between_checks: int) -> Tuple[int, int, int, float, int, float, int, int, int]:
+                            expected_duration_between_checks: int) -> ConnectionStatistics:
     """
     Iterates over a history of pings and returns basic statistics about the disconnections
 
@@ -127,15 +127,18 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
     # we set the initial value at the opposite of the first, so it starts by "resetting"
     connected: bool = internet_connection_history[0][1] < 0
     previous = 0
-    for time, ping in internet_connection_history:
-
+    current_ping = -1
+    current_timestamp = -1
+    for timestamp, ping in internet_connection_history:
+        current_timestamp = timestamp
+        current_ping = ping
         # this first part is for calculating the duration of the latest state (could be in a separate smaller loop)
         # if the state changed we reset
         if connected and ping < 0 or not connected and ping > 0:
             latest_duration = 0
             connected = ping > 0
         else:
-            latest_duration += time - previous
+            latest_duration += timestamp - previous
 
         if ping > 0:
             max_ping = max(max_ping, ping)
@@ -143,13 +146,13 @@ def get_disconnection_stats(internet_connection_history: List[Tuple[int, int]],
             average_ping += ping
             nb_pings += 1
 
-        previous = time
+        previous = timestamp
 
     if nb_pings:
         average_ping /= nb_pings
 
-    return int(latest_duration), longest_time, start_time_longest_disconnection, average_time, nb_disconnection, \
-           average_disconnection_per_hour, min_ping, max_ping, average_ping
+    return ConnectionStatistics(current_ping, current_timestamp, int(latest_duration), longest_time, start_time_longest_disconnection, average_time, nb_disconnection, \
+           average_disconnection_per_hour, min_ping, max_ping, average_ping)
 
 
 async def check_internet_loop(client: Client, host: str, port: int, timeout: int, save_real_time: bool,
@@ -164,7 +167,7 @@ async def check_internet_loop(client: Client, host: str, port: int, timeout: int
         now = int(time.time())
         if save_real_time:
             internet += [(now, ping)]
-            stats = ConnectionStatistics(ping >= 0, ping, now, *get_disconnection_stats(internet, internet_check_delay))
+            stats = get_disconnection_stats(internet, internet_check_delay)
             client.update_internet_statistics(stats)
 
         if saving_file_path:
@@ -266,7 +269,7 @@ def read_internet_file(client: Client, read_internet_file: str, save_real_time: 
     f = open(read_internet_file, "r")
     for timestamp, ping in [[int(i) for i in line.split(",")] for line in f.readlines()]:
         pings += [(timestamp, ping)]
-        stats = ConnectionStatistics(ping >= 0, ping, timestamp, *get_disconnection_stats(pings, delay_internet))
+        stats = get_disconnection_stats(pings, delay_internet)
         # TODO: it shouldn't be the default delay, we could update an average through the reading to get an approximate
         client.update_internet_statistics(stats)
 
@@ -342,7 +345,7 @@ def init_arguments() -> argparse.Namespace:
                                                                                  "connection data into a file")
 
     # Parameters for bandwidth checks
-    parser.add_argument("-db", "--delay-bandwidth", default=30, type=float,
+    parser.add_argument("-db", "--delay-bandwidth", default=10, type=float,
                         help="The preferred time in between two checks of the real bandwidth consumption. This time "
                              "won't necessarily be met, it depends on your computer load level")
     parser.add_argument("-brt", "--bandwidth-real-time", action="store_true", help="Use this option to get real time "
